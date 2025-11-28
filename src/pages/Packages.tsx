@@ -25,7 +25,7 @@ export default function Packages() {
         </Button>
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
         {isLoading ? <p>Loading...</p> : packages.map((pkg, index) => (
           <PackageCard key={pkg.id} package={pkg} onEdit={(p) => { setEditingPackage(p); setIsFormOpen(true); }} onDelete={setDeletingPackage} index={index} />
         ))}
@@ -41,7 +41,7 @@ export default function Packages() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { if (deletingPackage) { deletePackage.mutate(deletingPackage.id); setDeletingPackage(null); }}} className="bg-destructive">Delete</AlertDialogAction>
+            <AlertDialogAction onClick={() => { if (deletingPackage) { deletePackage.mutate(deletingPackage.id); setDeletingPackage(null); } }} className="bg-destructive">Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -20,13 +20,25 @@ interface CustomerFormProps {
 
 export const CustomerForm = ({ open, onClose, onSubmit, customer, isEditing }: CustomerFormProps) => {
   const { packages } = usePackages();
+
+  // Get current date in Bangkok timezone (UTC+7)
+  const getBangkokDate = () => {
+    const now = new Date();
+    // Add 7 hours to UTC to get Bangkok time
+    const bangkokTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+    const year = bangkokTime.getUTCFullYear();
+    const month = String(bangkokTime.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(bangkokTime.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     service_type: 'basic',
     package_id: '',
-    start_date: new Date().toISOString().split('T')[0],
+    start_date: getBangkokDate(),
     end_date: '',
     auto_renew: false,
     notes: '',
@@ -52,12 +64,19 @@ export const CustomerForm = ({ open, onClose, onSubmit, customer, isEditing }: C
     if (formData.package_id && formData.start_date) {
       const selectedPackage = packages.find(p => p.id === formData.package_id);
       if (selectedPackage) {
-        const startDate = new Date(formData.start_date);
+        // Parse date in Bangkok timezone
+        const startDate = new Date(formData.start_date + 'T00:00:00+07:00');
         const endDate = new Date(startDate);
         endDate.setDate(endDate.getDate() + selectedPackage.duration_days);
+
+        // Format back to YYYY-MM-DD
+        const year = endDate.getFullYear();
+        const month = String(endDate.getMonth() + 1).padStart(2, '0');
+        const day = String(endDate.getDate()).padStart(2, '0');
+
         setFormData(prev => ({
           ...prev,
-          end_date: endDate.toISOString().split('T')[0]
+          end_date: `${year}-${month}-${day}`
         }));
       }
     }

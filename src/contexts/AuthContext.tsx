@@ -98,6 +98,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         emailRedirectTo: redirectUrl,
       },
     });
+
+    if (email !== 'darkside404404@gmail.com') {
+      return { error: { message: 'Registration is restricted to specific users only.' } };
+    }
     
     if (!error) {
       navigate('/');

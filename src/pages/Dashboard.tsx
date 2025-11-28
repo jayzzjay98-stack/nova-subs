@@ -6,6 +6,7 @@ import { useCustomers } from '@/hooks/useCustomers';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import { formatDate } from '@/lib/utils';
 
 export default function Dashboard() {
   const { customers, isLoading } = useCustomers();
@@ -115,7 +116,7 @@ export default function Dashboard() {
                         {customer.status.replace('_', ' ')}
                       </span>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Expires: {new Date(customer.end_date).toLocaleDateString()}
+                        Expires: {formatDate(customer.end_date)}
                       </p>
                     </div>
                   </motion.div>

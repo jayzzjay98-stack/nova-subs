@@ -8,6 +8,7 @@ export interface Package {
   duration_days: number;
   description?: string;
   price?: number;
+  image_url?: string;
   is_default: boolean;
   created_at: string;
 }

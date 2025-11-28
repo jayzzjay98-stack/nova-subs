@@ -24,6 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { formatDate } from '@/lib/utils';
 
 export default function Customers() {
   const { customers, isLoading, createCustomer, updateCustomer, deleteCustomer } = useCustomers();
@@ -143,7 +144,7 @@ export default function Customers() {
                             {customer.status.replace('_', ' ')}
                           </span>
                         </TableCell>
-                        <TableCell>{new Date(customer.end_date).toLocaleDateString()}</TableCell>
+                        <TableCell>{formatDate(customer.end_date)}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button
