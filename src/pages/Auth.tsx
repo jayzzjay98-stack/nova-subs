@@ -8,12 +8,19 @@ import { Label } from '@/components/ui/label';
 import { Package } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { z } from 'zod';
+
+const authSchema = z.object({
+  email: z.string().trim().email('Invalid email address').max(255, 'Email too long'),
+  password: z.string().min(6, 'Password must be at least 6 characters').max(100, 'Password too long'),
+});
 
 export default function Auth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, user } = useAuth();
+  const [isSignUp, setIsSignUp] = useState(false);
+  const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if already logged in
@@ -25,29 +32,43 @@ export default function Auth() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password) {
-      toast.error('Please fill in all fields');
-      return;
-    }
-
-    if (password.length < 6) {
-      toast.error('Password must be at least 6 characters');
-      return;
+    // Validate input
+    try {
+      authSchema.parse({ email, password });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+        return;
+      }
     }
 
     setLoading(true);
 
     try {
-      const { error } = await signIn(email, password);
-
-      if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          toast.error('Invalid email or password');
+      if (isSignUp) {
+        const { error } = await signUp(email, password);
+        
+        if (error) {
+          if (error.message.includes('User already registered')) {
+            toast.error('This email is already registered. Please sign in instead.');
+          } else {
+            toast.error(error.message);
+          }
         } else {
-          toast.error(error.message);
+          toast.success('Account created successfully! Welcome!');
         }
       } else {
-        toast.success('Welcome back!');
+        const { error } = await signIn(email, password);
+
+        if (error) {
+          if (error.message.includes('Invalid login credentials')) {
+            toast.error('Invalid email or password');
+          } else {
+            toast.error(error.message);
+          }
+        } else {
+          toast.success('Welcome back!');
+        }
       }
     } catch (error: any) {
       toast.error('An unexpected error occurred');
@@ -81,9 +102,12 @@ export default function Auth() {
 
         <Card className="shadow-card border-border/50">
           <CardHeader>
-            <CardTitle>Welcome Back</CardTitle>
+            <CardTitle>{isSignUp ? 'Create Account' : 'Welcome Back'}</CardTitle>
             <CardDescription>
-              Enter your credentials to access your account
+              {isSignUp 
+                ? 'Enter your email and password to create an account'
+                : 'Enter your credentials to access your account'
+              }
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -118,9 +142,22 @@ export default function Auth() {
                 className="w-full bg-gradient-primary hover:opacity-90 transition-opacity duration-200 shadow-elegant"
                 disabled={loading}
               >
-                {loading ? 'Loading...' : 'Sign In'}
+                {loading ? 'Loading...' : (isSignUp ? 'Sign Up' : 'Sign In')}
               </Button>
             </form>
+            
+            <div className="mt-4 text-center text-sm">
+              <button
+                type="button"
+                onClick={() => setIsSignUp(!isSignUp)}
+                className="text-primary hover:underline"
+              >
+                {isSignUp 
+                  ? 'Already have an account? Sign in' 
+                  : "Don't have an account? Sign up"
+                }
+              </button>
+            </div>
           </CardContent>
         </Card>
       </motion.div>
