@@ -4,21 +4,46 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
+import { MFAVerification } from '@/components/auth/MFAVerification';
+import { toast } from 'sonner';
 
 export default function Auth() {
     const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showMFAVerification, setShowMFAVerification] = useState(false);
+    const [mfaFactorId, setMfaFactorId] = useState('');
     const { signIn, signUp } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (isLogin) {
-            await signIn(email, password);
+            const result = await signIn(email, password);
+
+            // Check if MFA is required
+            if (result.mfaRequired) {
+                setMfaFactorId(result.factorId!);
+                setShowMFAVerification(true);
+            } else if (result.error) {
+                toast.error(result.error.message);
+            }
         } else {
-            await signUp(email, password);
+            const result = await signUp(email, password);
+            if (result.error) {
+                toast.error(result.error.message);
+            }
         }
+    };
+
+    const handleMFASuccess = () => {
+        setShowMFAVerification(false);
+        navigate('/');
+    };
+
+    const handleMFACancel = () => {
+        setShowMFAVerification(false);
+        toast.info('Login cancelled');
     };
 
     return (
@@ -65,6 +90,13 @@ export default function Auth() {
                     </form>
                 </CardContent>
             </Card>
+
+            <MFAVerification
+                open={showMFAVerification}
+                factorId={mfaFactorId}
+                onSuccess={handleMFASuccess}
+                onCancel={handleMFACancel}
+            />
         </div>
     );
 }

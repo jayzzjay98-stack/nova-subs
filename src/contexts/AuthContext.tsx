@@ -3,12 +3,13 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { generateDeviceFingerprint, getDeviceId, getDeviceInfo } from '@/lib/deviceFingerprint';
+import { getMFAFactors } from '@/lib/mfa';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error?: any; mfaRequired?: boolean; factorId?: string }>;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
@@ -192,6 +193,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           session_id: data.session.access_token,
         })
         .eq('id', authorizedDevice.id);
+    }
+
+    // Check if user has MFA enabled
+    const mfaFactors = await getMFAFactors();
+
+    if (mfaFactors.hasEnabledMFA && mfaFactors.factors.length > 0) {
+      // MFA is enabled - return mfaRequired flag
+      // Don't navigate yet, wait for MFA verification
+      return {
+        mfaRequired: true,
+        factorId: mfaFactors.factors[0].id
+      };
     }
 
     navigate('/');
