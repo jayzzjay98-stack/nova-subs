@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { generateDeviceFingerprint, getDeviceId, getDeviceInfo } from '@/lib/deviceFingerprint';
 
 interface AuthContextType {
   user: User | null;
@@ -88,16 +89,113 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       };
     }
 
-    const { error } = await supabase.auth.signInWithPassword({
+    // Get device fingerprint
+    const deviceFingerprint = await generateDeviceFingerprint();
+    const deviceId = getDeviceId();
+    const deviceInfo = getDeviceInfo();
+
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (!error) {
-      navigate('/');
+    if (error) {
+      return { error };
     }
 
-    return { error };
+    // Check if user has any active sessions
+    const { data: activeSessions, error: activeError } = await supabase
+      .from('authorized_devices')
+      .select('id, device_name, session_id')
+      .eq('user_id', data.user.id)
+      .eq('is_active', true);
+
+    if (activeError && activeError.code !== 'PGRST116') {
+      console.error('Active session check error:', activeError);
+    }
+
+    // If there's an active session, block the login
+    if (activeSessions && activeSessions.length > 0) {
+      await supabase.auth.signOut();
+      return {
+        error: {
+          message: `You are already logged in on another device. Please logout first before logging in again.`
+        }
+      };
+    }
+
+    // Check if this device is authorized
+    const { data: authorizedDevice, error: deviceError } = await supabase
+      .from('authorized_devices')
+      .select('*')
+      .eq('user_id', data.user.id)
+      .eq('device_fingerprint', deviceFingerprint)
+      .maybeSingle();
+
+    if (deviceError && deviceError.code !== 'PGRST116') {
+      console.error('Device check error:', deviceError);
+    }
+
+    if (!authorizedDevice) {
+      // This is a new device - check if user has any authorized devices
+      const { data: existingDevices, error: checkError } = await supabase
+        .from('authorized_devices')
+        .select('id')
+        .eq('user_id', data.user.id)
+        .limit(1);
+
+      if (checkError) {
+        console.error('Check existing devices error:', checkError);
+      }
+
+      if (existingDevices && existingDevices.length > 0) {
+        // User has authorized devices, but this is not one of them
+        await supabase.auth.signOut();
+        return {
+          error: {
+            message: 'This device is not authorized. Please login from your authorized device.'
+          }
+        };
+      }
+
+      // First time login - authorize this device
+      const { error: insertError } = await supabase
+        .from('authorized_devices')
+        .insert({
+          user_id: data.user.id,
+          device_id: deviceId,
+          device_fingerprint: deviceFingerprint,
+          device_name: `${deviceInfo.browser} on ${deviceInfo.os}`,
+          browser: deviceInfo.browser,
+          os: deviceInfo.os,
+          platform: deviceInfo.platform,
+          is_active: true,
+          session_id: data.session.access_token,
+        });
+
+      if (insertError) {
+        console.error('Failed to register device:', insertError);
+        await supabase.auth.signOut();
+        return {
+          error: {
+            message: 'Failed to register device. Please try again.'
+          }
+        };
+      }
+    } else {
+      // Update last used timestamp and mark as active
+      await supabase
+        .from('authorized_devices')
+        .update({
+          last_used_at: new Date().toISOString(),
+          is_active: true,
+          session_id: data.session.access_token,
+        })
+        .eq('id', authorizedDevice.id);
+    }
+
+    navigate('/');
+    return { error: null };
   };
 
   const signUp = async (email: string, password: string) => {
@@ -128,6 +226,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
+    const session = await supabase.auth.getSession();
+
+    // Mark all devices as inactive for this user
+    if (session.data.session) {
+      await supabase
+        .from('authorized_devices')
+        .update({
+          is_active: false,
+          session_id: null,
+        })
+        .eq('session_id', session.data.session.access_token);
+    }
+
     await supabase.auth.signOut();
     navigate('/auth');
   };
