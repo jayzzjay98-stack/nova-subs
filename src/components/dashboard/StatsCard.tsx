@@ -20,25 +20,33 @@ export const StatsCard = ({ title, value, icon: Icon, trend, delay = 0 }: StatsC
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay }}
     >
-      <Card className="relative overflow-hidden hover:shadow-card transition-all duration-300 group">
-        <div className="absolute inset-0 bg-gradient-card opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      <Card className="relative overflow-hidden hover:shadow-2xl transition-all duration-300 group border-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-400" />
         <CardContent className="p-6 relative">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground mb-1">{title}</p>
-              <h3 className="text-3xl font-bold text-foreground">{value}</h3>
+          <div className="relative p-4">
+            {/* Large Icon Section */}
+            <div className="flex items-center justify-center mb-3 h-40 w-full">
+              <div className="bg-white/20 backdrop-blur-sm rounded-3xl p-8">
+                <Icon className="h-16 w-16 text-white" />
+              </div>
+            </div>
+
+            {/* Content Section */}
+            <div className="text-center space-y-1">
+              <h3 className="text-xl font-bold text-white">
+                {value}
+              </h3>
+
+              <p className="text-lg font-bold text-white/90">
+                {title}
+              </p>
+
               {trend && (
-                <p className={`text-sm mt-2 ${trend.isPositive ? 'text-success' : 'text-destructive'}`}>
+                <p className={`text-sm mt-1 ${trend.isPositive ? 'text-white' : 'text-white/90'}`}>
                   {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}%
                 </p>
               )}
             </div>
-            <motion.div
-              whileHover={{ scale: 1.1, rotate: 5 }}
-              className="h-12 w-12 rounded-xl bg-gradient-primary flex items-center justify-center shadow-glow"
-            >
-              <Icon className="h-6 w-6 text-white" />
-            </motion.div>
           </div>
         </CardContent>
       </Card>

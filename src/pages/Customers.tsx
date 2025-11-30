@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -24,7 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatDuration } from '@/lib/utils';
 
 export default function Customers() {
   const { customers, isLoading, createCustomer, updateCustomer, deleteCustomer } = useCustomers();
@@ -32,11 +33,85 @@ export default function Customers() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | undefined>();
   const [deletingCustomer, setDeletingCustomer] = useState<Customer | null>(null);
+  const [sortField, setSortField] = useState<'name' | 'package' | 'end_date' | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 7;
+  const [selectedPackage, setSelectedPackage] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
 
-  const filteredCustomers = customers.filter(
-    (customer) =>
-      customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      customer.email.toLowerCase().includes(searchQuery.toLowerCase())
+  // Get unique package combinations (name + duration) used by customers - memoized
+  const usedPackagesData = useMemo(() =>
+    Array.from(
+      new Map(
+        customers
+          .filter(c => c.packages?.name)
+          .map(c => [`${c.packages!.name}-${c.packages!.duration_days}`, c.packages!])
+      ).values()
+    ),
+    [customers]
+  );
+
+  const filteredCustomers = useMemo(() =>
+    customers.filter(
+      (customer) => {
+        const matchesSearch = customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (customer.packages?.name || '').toLowerCase().includes(searchQuery.toLowerCase());
+
+        // Match exact package name + duration combination
+        let matchesPackage = selectedPackage === 'all';
+        if (!matchesPackage && customer.packages) {
+          const packageKey = `${customer.packages.name}|${customer.packages.duration_days}`;
+          matchesPackage = packageKey === selectedPackage;
+        }
+
+        const matchesStatus = selectedStatus === 'all' || customer.status === selectedStatus;
+
+        return matchesSearch && matchesPackage && matchesStatus;
+      }
+    ),
+    [customers, searchQuery, selectedPackage, selectedStatus]
+  );
+
+  const handleSort = (field: 'name' | 'package' | 'end_date') => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const sortedCustomers = useMemo(() =>
+    [...filteredCustomers].sort((a, b) => {
+      if (!sortField) return 0;
+
+      let aValue: string | number = '';
+      let bValue: string | number = '';
+
+      if (sortField === 'name') {
+        aValue = a.name.toLowerCase();
+        bValue = b.name.toLowerCase();
+      } else if (sortField === 'package') {
+        aValue = (a.packages?.name || '').toLowerCase();
+        bValue = (b.packages?.name || '').toLowerCase();
+      } else if (sortField === 'end_date') {
+        aValue = new Date(a.end_date).getTime();
+        bValue = new Date(b.end_date).getTime();
+      }
+
+      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    }),
+    [filteredCustomers, sortField, sortOrder]
+  );
+
+  const totalPages = Math.ceil(sortedCustomers.length / itemsPerPage);
+  const paginatedCustomers = sortedCustomers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   const handleCreate = (data: any) => {
@@ -84,44 +159,103 @@ export default function Customers() {
       >
         <Card className="shadow-card">
           <CardContent className="p-6">
-            <div className="flex items-center gap-2 mb-6">
-              <Search className="h-5 w-5 text-muted-foreground" />
-              <Input
-                placeholder="Search customers..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="max-w-sm"
-              />
+            <div className="flex items-center gap-4 mb-6 flex-wrap">
+              <div className="flex items-center gap-2">
+                <Search className="h-5 w-5 text-muted-foreground" />
+                <Input
+                  placeholder="Search customers..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="max-w-sm"
+                />
+              </div>
+
+              <Select value={selectedPackage} onValueChange={setSelectedPackage}>
+                <SelectTrigger className="w-[240px]">
+                  <SelectValue placeholder="All Packages" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Packages</SelectItem>
+                  {usedPackagesData.map((pkg) => (
+                    <SelectItem key={`${pkg.name}-${pkg.duration_days}`} value={`${pkg.name}|${pkg.duration_days}`}>
+                      {pkg.name} ({formatDuration(pkg.duration_days)})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="All Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="expiring_soon">Expiring Soon</SelectItem>
+                  <SelectItem value="expired">Expired</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
+                    <TableHead className="w-12">#</TableHead>
+                    <TableHead
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort('name')}
+                    >
+                      <div className="flex items-center gap-1">
+                        Name
+                        {sortField === 'name' && (
+                          sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                        )}
+                      </div>
+                    </TableHead>
                     <TableHead>Email</TableHead>
-                    <TableHead>Service</TableHead>
-                    <TableHead>Package</TableHead>
+                    <TableHead
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort('package')}
+                    >
+                      <div className="flex items-center gap-1">
+                        Package
+                        {sortField === 'package' && (
+                          sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                        )}
+                      </div>
+                    </TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>End Date</TableHead>
+                    <TableHead
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort('end_date')}
+                    >
+                      <div className="flex items-center gap-1">
+                        End Date
+                        {sortField === 'end_date' && (
+                          sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                        )}
+                      </div>
+                    </TableHead>
+                    <TableHead>Remaining</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center">
+                      <TableCell colSpan={9} className="text-center">
                         Loading...
                       </TableCell>
                     </TableRow>
-                  ) : filteredCustomers.length === 0 ? (
+                  ) : paginatedCustomers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center text-muted-foreground">
+                      <TableCell colSpan={9} className="text-center text-muted-foreground">
                         No customers found
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredCustomers.map((customer, index) => (
+                    paginatedCustomers.map((customer, index) => (
                       <motion.tr
                         key={customer.id}
                         initial={{ opacity: 0, x: -20 }}
@@ -129,10 +263,15 @@ export default function Customers() {
                         transition={{ delay: index * 0.05 }}
                         className="group hover:bg-muted/50"
                       >
-                        <TableCell className="font-medium">{customer.name}</TableCell>
+                        <TableCell className="font-medium">{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
+                        <TableCell className="font-medium text-lg">{customer.name}</TableCell>
                         <TableCell>{customer.email}</TableCell>
-                        <TableCell className="capitalize">{customer.service_type}</TableCell>
-                        <TableCell>{customer.packages?.name || 'N/A'}</TableCell>
+                        <TableCell className="text-lg font-medium">
+                          {customer.packages?.name ?
+                            `${customer.packages.name} (${formatDuration(customer.packages.duration_days)})` :
+                            'N/A'
+                          }
+                        </TableCell>
                         <TableCell>
                           <span
                             className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
@@ -144,7 +283,25 @@ export default function Customers() {
                             {customer.status.replace('_', ' ')}
                           </span>
                         </TableCell>
-                        <TableCell>{formatDate(customer.end_date)}</TableCell>
+                        <TableCell className="text-lg">{formatDate(customer.end_date)}</TableCell>
+                        <TableCell>
+                          {(() => {
+                            const end = new Date(customer.end_date + 'T00:00:00+07:00');
+                            const now = new Date();
+                            const diffTime = end.getTime() - now.getTime();
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                            let colorClass = "text-green-500"; // Default > 7 days
+                            if (diffDays <= 0) colorClass = "text-red-500";
+                            else if (diffDays <= 7) colorClass = "text-yellow-500";
+
+                            return (
+                              <span className={`text-lg font-bold ${colorClass}`}>
+                                {diffDays > 0 ? `${diffDays} Days` : 'Expired'}
+                              </span>
+                            );
+                          })()}
+                        </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button
@@ -173,6 +330,44 @@ export default function Customers() {
                 </TableBody>
               </Table>
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-4">
+                <div className="text-sm text-muted-foreground">
+                  Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, sortedCustomers.length)} of {sortedCustomers.length} customers
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(page)}
+                      className={currentPage === page ? "bg-gradient-primary" : ""}
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </motion.div>

@@ -77,55 +77,7 @@ export default function Dashboard() {
         />
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-      >
-        <Card className="shadow-card">
-          <CardHeader>
-            <CardTitle>Recent Customers</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <p className="text-muted-foreground">Loading...</p>
-            ) : recentCustomers.length === 0 ? (
-              <p className="text-muted-foreground">No customers yet</p>
-            ) : (
-              <div className="space-y-4">
-                {recentCustomers.map((customer, index) => (
-                  <motion.div
-                    key={customer.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.5 + index * 0.1 }}
-                    className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors duration-200"
-                  >
-                    <div>
-                      <p className="font-medium text-foreground">{customer.name}</p>
-                      <p className="text-sm text-muted-foreground">{customer.email}</p>
-                    </div>
-                    <div className="text-right">
-                      <span
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
-                        ${customer.status === 'active' ? 'bg-success/10 text-success' : ''}
-                        ${customer.status === 'expired' ? 'bg-destructive/10 text-destructive' : ''}
-                        ${customer.status === 'expiring_soon' ? 'bg-warning/10 text-warning' : ''}
-                        `}
-                      >
-                        {customer.status.replace('_', ' ')}
-                      </span>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Expires: {formatDate(customer.end_date)}
-                      </p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </motion.div>
+
     </div>
   );
 }

@@ -8,7 +8,6 @@ const menuItems = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
   { title: 'Customers', url: '/customers', icon: Users },
   { title: 'Packages', url: '/packages', icon: PackageIcon },
-  { title: 'Settings', url: '/settings', icon: Settings },
 ];
 
 interface TopNavigationProps {
@@ -32,7 +31,7 @@ export function TopNavigation({ theme, toggleTheme }: TopNavigationProps) {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2 }}
-          className="flex items-center gap-3"
+          className="flex items-center gap-3 w-[200px]"
         >
           <div className="h-12 w-12 rounded-xl bg-gradient-primary flex items-center justify-center shadow-glow animate-pulse">
             <PackageIcon className="h-7 w-7 text-white" />
@@ -46,7 +45,7 @@ export function TopNavigation({ theme, toggleTheme }: TopNavigationProps) {
         </motion.div>
 
         {/* Navigation Menu */}
-        <nav className="flex items-center gap-2">
+        <nav className="flex items-center gap-2 absolute left-1/2 -translate-x-1/2">
           {menuItems.map((item, index) => (
             <motion.div
               key={item.title}
@@ -97,6 +96,22 @@ export function TopNavigation({ theme, toggleTheme }: TopNavigationProps) {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5 }}
           >
+            <NavLink to="/settings">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative h-11 w-11 rounded-lg hover:bg-gradient-primary/10 hover:shadow-elegant transition-all duration-300 hover:scale-110 group"
+              >
+                <Settings className="h-5 w-5 transition-transform duration-300 group-hover:rotate-90" />
+              </Button>
+            </NavLink>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.6 }}
+          >
             <Button
               onClick={signOut}
               variant="ghost"
@@ -106,24 +121,6 @@ export function TopNavigation({ theme, toggleTheme }: TopNavigationProps) {
               <span className="font-medium">Sign Out</span>
             </Button>
           </motion.div>
-
-          {user && (
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.6 }}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-primary/10 border border-primary/20"
-            >
-              <div className="h-8 w-8 rounded-full bg-gradient-primary flex items-center justify-center shadow-glow">
-                <span className="text-white text-sm font-bold">
-                  {user.email?.[0].toUpperCase()}
-                </span>
-              </div>
-              <span className="text-sm font-medium text-foreground hidden lg:block">
-                {user.email}
-              </span>
-            </motion.div>
-          )}
         </div>
       </div>
     </motion.header>

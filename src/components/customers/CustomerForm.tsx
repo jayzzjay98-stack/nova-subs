@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { usePackages } from '@/hooks/usePackages';
 import { Customer } from '@/hooks/useCustomers';
 import { motion } from 'framer-motion';
+import { formatDuration } from '@/lib/utils';
 
 interface CustomerFormProps {
   open: boolean;
@@ -35,7 +36,6 @@ export const CustomerForm = ({ open, onClose, onSubmit, customer, isEditing }: C
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: '',
     service_type: 'basic',
     package_id: '',
     start_date: getBangkokDate(),
@@ -49,7 +49,6 @@ export const CustomerForm = ({ open, onClose, onSubmit, customer, isEditing }: C
       setFormData({
         name: customer.name,
         email: customer.email,
-        phone: customer.phone || '',
         service_type: customer.service_type,
         package_id: customer.package_id || '',
         start_date: customer.start_date,
@@ -115,14 +114,6 @@ export const CustomerForm = ({ open, onClose, onSubmit, customer, isEditing }: C
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="package">Package</Label>
               <Select
                 value={formData.package_id}
@@ -134,7 +125,7 @@ export const CustomerForm = ({ open, onClose, onSubmit, customer, isEditing }: C
                 <SelectContent>
                   {packages.map((pkg) => (
                     <SelectItem key={pkg.id} value={pkg.id}>
-                      {pkg.name} ({pkg.duration_days} days)
+                      {pkg.name} ({formatDuration(pkg.duration_days)})
                     </SelectItem>
                   ))}
                 </SelectContent>
