@@ -8,17 +8,18 @@ import { Switch } from '@/components/ui/switch';
 import { Package } from '@/hooks/usePackages';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Upload } from 'lucide-react';
+import { Upload, Trash2 } from 'lucide-react';
 
 interface PackageFormProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (data: any) => void;
+  onDelete?: (pkg: Package) => void;
   package?: Package;
   isEditing?: boolean;
 }
 
-export const PackageForm = ({ open, onClose, onSubmit, package: pkg, isEditing }: PackageFormProps) => {
+export const PackageForm = ({ open, onClose, onSubmit, onDelete, package: pkg, isEditing }: PackageFormProps) => {
   const [formData, setFormData] = useState({
     name: '',
     duration_days: 0,
@@ -189,13 +190,32 @@ export const PackageForm = ({ open, onClose, onSubmit, package: pkg, isEditing }
             />
             <Label htmlFor="is_default">Mark as default package</Label>
           </div>
-          <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit" className="bg-gradient-primary">
-              {isEditing ? 'Update' : 'Create'}
-            </Button>
+          <div className="flex justify-between gap-2 pt-4">
+            <div>
+              {isEditing && onDelete && pkg && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => {
+                    if (window.confirm(`Are you sure you want to delete "${pkg.name}"?`)) {
+                      onDelete(pkg);
+                      onClose();
+                    }
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Package
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button type="submit" className="bg-gradient-primary">
+                {isEditing ? 'Update' : 'Create'}
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>

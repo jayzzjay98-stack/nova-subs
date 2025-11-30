@@ -13,6 +13,9 @@ interface AuthContextType {
   isAdmin: boolean;
 }
 
+// Allowed email address for login
+const ALLOWED_EMAIL = 'darkside404404@gmail.com';
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
@@ -35,7 +38,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
           setTimeout(() => {
             checkAdminStatus(session.user.id);
@@ -76,21 +79,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signIn = async (email: string, password: string) => {
+    // Check if email is allowed
+    if (email.toLowerCase() !== ALLOWED_EMAIL.toLowerCase()) {
+      return {
+        error: {
+          message: 'Access denied. This email is not authorized to access this system.'
+        }
+      };
+    }
+
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-    
+
     if (!error) {
       navigate('/');
     }
-    
+
     return { error };
   };
 
   const signUp = async (email: string, password: string) => {
+    // Check if email is allowed
+    if (email.toLowerCase() !== ALLOWED_EMAIL.toLowerCase()) {
+      return {
+        error: {
+          message: 'Registration is restricted. Only authorized emails can create an account.'
+        }
+      };
+    }
+
     const redirectUrl = `${window.location.origin}/`;
-    
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -99,14 +120,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       },
     });
 
-    if (email !== 'darkside404404@gmail.com') {
-      return { error: { message: 'Registration is restricted to specific users only.' } };
-    }
-    
     if (!error) {
       navigate('/');
     }
-    
+
     return { error };
   };
 

@@ -31,26 +31,6 @@ export const PackageCard = ({ package: pkg, onEdit, onDelete, index, isSelected,
                 {/* Gradient Background */}
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-400" />
 
-                {/* Edit/Delete buttons */}
-                <div className="absolute top-3 right-3 flex gap-2 z-10">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onEdit(pkg)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-white"
-                    >
-                        <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onDelete(pkg)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-white text-destructive hover:text-destructive"
-                    >
-                        <Trash2 className="h-4 w-4" />
-                    </Button>
-                </div>
-
                 {/* Default Badge */}
                 {pkg.is_default && (
                     <div className="absolute top-3 left-3 z-10">

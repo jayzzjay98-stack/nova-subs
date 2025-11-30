@@ -55,7 +55,25 @@ export default function Packages() {
         ))}
       </div>
 
-      <PackageForm open={isFormOpen} onClose={() => { setIsFormOpen(false); setEditingPackage(undefined); }} onSubmit={(data) => editingPackage ? updatePackage.mutate({ id: editingPackage.id, ...data }) : createPackage.mutate(data)} package={editingPackage} isEditing={!!editingPackage} />
+      <PackageForm
+        open={isFormOpen}
+        onClose={() => {
+          setIsFormOpen(false);
+          setEditingPackage(undefined);
+        }}
+        onSubmit={(data) => {
+          if (editingPackage) {
+            updatePackage.mutate({ id: editingPackage.id, ...data });
+          } else {
+            createPackage.mutate(data);
+          }
+        }}
+        onDelete={(pkg) => {
+          setDeletingPackage(pkg);
+        }}
+        package={editingPackage}
+        isEditing={!!editingPackage}
+      />
 
       <AlertDialog open={!!deletingPackage} onOpenChange={() => setDeletingPackage(null)}>
         <AlertDialogContent>
