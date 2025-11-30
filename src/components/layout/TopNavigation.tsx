@@ -3,6 +3,7 @@ import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
+import { ModernNavButton } from '@/components/ui/ModernNavButton';
 
 const menuItems = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
@@ -45,7 +46,7 @@ export function TopNavigation({ theme, toggleTheme }: TopNavigationProps) {
         </motion.div>
 
         {/* Navigation Menu */}
-        <nav className="flex items-center gap-2 absolute left-1/2 -translate-x-1/2">
+        <nav className="flex items-center gap-4 absolute left-1/2 -translate-x-1/2">
           {menuItems.map((item, index) => (
             <motion.div
               key={item.title}
@@ -56,15 +57,15 @@ export function TopNavigation({ theme, toggleTheme }: TopNavigationProps) {
               <NavLink
                 to={item.url}
                 end
-                className="group relative px-6 py-3 rounded-lg transition-all duration-300 flex items-center gap-2 hover:bg-gradient-primary/10 hover:shadow-elegant hover:scale-105"
-                activeClassName="bg-gradient-primary text-white shadow-glow font-semibold scale-105"
+                className="block"
               >
-                <item.icon className="h-5 w-5 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3" />
-                <span className="text-sm font-medium">{item.title}</span>
-                <motion.div
-                  className="absolute inset-0 rounded-lg bg-gradient-primary opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-20 -z-10"
-                  initial={false}
-                />
+                {({ isActive }) => (
+                  <ModernNavButton
+                    title={item.title}
+                    icon={item.icon}
+                    isActive={isActive}
+                  />
+                )}
               </NavLink>
             </motion.div>
           ))}

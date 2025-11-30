@@ -1,0 +1,75 @@
+/* Adapted from Uiverse.io by bhaveshxrawat */
+.package-card {
+    /* width: 190px; Removed fixed width for responsiveness */
+    /* height: 254px; Removed fixed height */
+    background: #07182E;
+    /* Restore background as base */
+    position: relative;
+    display: flex;
+    place-content: center;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 20px;
+    z-index: 0;
+    /* Performance optimizations */
+    contain: layout style paint;
+    /* Isolate layout calculations */
+    transform: translateZ(0);
+    /* Force GPU acceleration */
+    backface-visibility: hidden;
+    /* Prevent flickering */
+}
+
+.package-card-content {
+    z-index: 2;
+    /* Top layer */
+    color: white;
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.package-card::before {
+    content: '';
+    position: absolute;
+    width: 50%;
+    /* Responsive beam width (approx 100px on 200px card) */
+    height: 200%;
+    /* Ensure it covers corners when rotating */
+    background-image: linear-gradient(180deg, hsl(215 80% 45%), hsl(185 75% 50%));
+    /* Blue/Cyan gradient */
+    animation: rotBGimg 12s linear infinite;
+    /* Even slower (12s) */
+    filter: blur(1.5rem);
+    /* Soften the beam edges */
+    transition: all 0.2s linear;
+    z-index: 0;
+    /* Above base background, below inner background */
+    /* Flexbox on parent will center this if no top/left specified */
+    /* Performance optimizations */
+    will-change: transform;
+    /* Hint browser about animation */
+    transform: translateZ(0);
+    /* GPU acceleration */
+}
+
+@keyframes rotBGimg {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.package-card::after {
+    content: '';
+    position: absolute;
+    background: #07182E;
+    inset: 5px;
+    /* Border thickness */
+    border-radius: 15px;
+    z-index: 1;
+    /* Middle layer - covers center of gradient */
+}

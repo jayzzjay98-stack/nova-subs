@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { enrollMFA, verifyMFAEnrollment } from '@/lib/mfa';
-import { QRCodeSVG } from 'qrcode.react';
+import { QRCodeCanvas } from 'qrcode.react';
 import { Copy, Check, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -117,8 +117,32 @@ export const MFAEnrollment = ({ open, onClose, onSuccess }: MFAEnrollmentProps) 
                     <div className="space-y-4">
                         <div className="space-y-2">
                             <Label>Step 1: Scan QR Code</Label>
-                            <div className="flex justify-center p-4 bg-white rounded-lg">
-                                <QRCodeSVG value={qrCode} size={200} />
+                            <div className="flex justify-center p-6 bg-white rounded-xl shadow-inner border border-gray-200">
+                                {qrCode ? (
+                                    qrCode.startsWith('data:') ? (
+                                        <img
+                                            src={qrCode}
+                                            alt="QR Code"
+                                            className="w-[200px] h-[200px]"
+                                        />
+                                    ) : qrCode.includes('<svg') ? (
+                                        <div
+                                            dangerouslySetInnerHTML={{ __html: qrCode }}
+                                            className="w-[200px] h-[200px] [&>svg]:w-full [&>svg]:h-full"
+                                        />
+                                    ) : (
+                                        <QRCodeCanvas
+                                            value={qrCode}
+                                            size={200}
+                                            level="L"
+                                            includeMargin={true}
+                                        />
+                                    )
+                                ) : (
+                                    <div className="h-[200px] w-[200px] flex items-center justify-center text-gray-400 animate-pulse">
+                                        Loading QR...
+                                    </div>
+                                )}
                             </div>
                         </div>
 

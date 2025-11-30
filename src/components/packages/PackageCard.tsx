@@ -1,8 +1,9 @@
+import React from 'react';
 import { motion } from 'framer-motion';
 import { cn, formatCurrency, formatDuration } from '@/lib/utils';
 import { Package as PackageIcon, Pencil, Trash2 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import './PackageCard.css';
 import { Package } from '@/hooks/usePackages';
 
 interface PackageCardProps {
@@ -14,7 +15,7 @@ interface PackageCardProps {
     onSelect?: () => void;
 }
 
-export const PackageCard = ({ package: pkg, onEdit, onDelete, index, isSelected, onSelect }: PackageCardProps) => {
+const PackageCardComponent = ({ package: pkg, onEdit, onDelete, index, isSelected, onSelect }: PackageCardProps) => {
     return (
         <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -22,27 +23,24 @@ export const PackageCard = ({ package: pkg, onEdit, onDelete, index, isSelected,
             whileHover={{ y: -10, scale: 1.02 }}
             transition={{ delay: index * 0.1 }}
             onClick={onSelect}
-            className="cursor-pointer"
+            className="cursor-pointer h-full"
         >
-            <Card className={cn(
-                "relative overflow-hidden hover:shadow-2xl transition-all duration-300 group border-0",
-                isSelected ? "ring-4 ring-primary ring-offset-2 scale-105" : ""
+            <div className={cn(
+                "package-card w-full min-h-[320px]", // Added min-height for consistent look
+                isSelected ? "ring-4 ring-primary ring-offset-2" : ""
             )}>
-                {/* Gradient Background */}
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-400" />
+                <div className="package-card-content p-4 flex flex-col">
+                    {/* Default Badge */}
+                    {pkg.is_default && (
+                        <div className="absolute top-0 left-0 z-20">
+                            <span className="text-xs bg-white/90 text-purple-600 px-3 py-1 rounded-br-lg font-semibold shadow-sm">
+                                Default
+                            </span>
+                        </div>
+                    )}
 
-                {/* Default Badge */}
-                {pkg.is_default && (
-                    <div className="absolute top-3 left-3 z-10">
-                        <span className="text-xs bg-white/90 text-purple-600 px-3 py-1 rounded-full font-semibold">
-                            Default
-                        </span>
-                    </div>
-                )}
-
-                <div className="relative p-4">
-                    {/* Large Image/Icon Section - Fixed Height */}
-                    <div className="flex items-center justify-center mb-3 h-40 w-full">
+                    {/* Large Image/Icon Section */}
+                    <div className="flex items-center justify-center mb-4 h-32 w-full shrink-0">
                         {pkg.image_url ? (
                             <img
                                 src={pkg.image_url}
@@ -51,36 +49,40 @@ export const PackageCard = ({ package: pkg, onEdit, onDelete, index, isSelected,
                                 style={{ transform: 'perspective(1000px) rotateY(-10deg)' }}
                             />
                         ) : (
-                            <div className="bg-white/20 backdrop-blur-sm rounded-3xl p-8">
-                                <PackageIcon className="h-16 w-16 text-white" />
+                            <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-6">
+                                <PackageIcon className="h-12 w-12 text-white" />
                             </div>
                         )}
                     </div>
 
                     {/* Content Section */}
-                    <div className="text-center space-y-1">
-                        <h3 className="text-xl font-bold text-white">
+                    <div className="text-center space-y-2 flex-grow flex flex-col justify-center">
+                        <h3 className="text-xl font-bold text-white tracking-wide">
                             {pkg.name}
                         </h3>
 
                         {pkg.price && (
-                            <p className="text-lg font-black text-white">
+                            <p className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">
                                 {formatCurrency(pkg.price)}
                             </p>
                         )}
 
-                        <p className="text-lg font-bold text-white/90">
-                            {pkg.duration_days === 1 ? '1 Day' : `${pkg.duration_days} Days`} ({formatDuration(pkg.duration_days)})
+                        <p className="text-lg font-bold text-gray-300">
+                            {pkg.duration_days === 1 ? '1 Day' : `${pkg.duration_days} Days`}
+                            <span className="block text-sm opacity-70 font-normal">({formatDuration(pkg.duration_days)})</span>
                         </p>
 
                         {pkg.description && (
-                            <p className="text-xs text-white/80 mt-1 max-w-xs mx-auto line-clamp-2">
+                            <p className="text-xs text-gray-400 mt-2 line-clamp-2">
                                 {pkg.description}
                             </p>
                         )}
                     </div>
                 </div>
-            </Card>
+            </div>
         </motion.div>
     );
 };
+
+// Memoize to prevent unnecessary re-renders
+export const PackageCard = React.memo(PackageCardComponent);

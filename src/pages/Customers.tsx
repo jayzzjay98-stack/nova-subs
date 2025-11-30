@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Search, Pencil, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ModernNavButton } from '@/components/ui/ModernNavButton';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -114,23 +115,23 @@ export default function Customers() {
     currentPage * itemsPerPage
   );
 
-  const handleCreate = (data: any) => {
+  const handleCreate = useCallback((data: any) => {
     createCustomer.mutate(data);
-  };
+  }, [createCustomer]);
 
-  const handleEdit = (data: any) => {
+  const handleEdit = useCallback((data: any) => {
     if (editingCustomer) {
       updateCustomer.mutate({ id: editingCustomer.id, ...data });
       setEditingCustomer(undefined);
     }
-  };
+  }, [editingCustomer, updateCustomer]);
 
-  const handleDelete = () => {
+  const handleDelete = useCallback(() => {
     if (deletingCustomer) {
       deleteCustomer.mutate(deletingCustomer.id);
       setDeletingCustomer(null);
     }
-  };
+  }, [deletingCustomer, deleteCustomer]);
 
   return (
     <div className="space-y-6">
@@ -143,13 +144,12 @@ export default function Customers() {
           <h1 className="text-3xl font-bold text-foreground">Customers</h1>
           <p className="text-muted-foreground mt-2">Manage your customer subscriptions</p>
         </div>
-        <Button
+        <ModernNavButton
+          title="Add Customer"
+          icon={Plus}
           onClick={() => setIsFormOpen(true)}
-          className="bg-gradient-primary shadow-elegant"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Customer
-        </Button>
+          size="small"
+        />
       </motion.div>
 
       <motion.div

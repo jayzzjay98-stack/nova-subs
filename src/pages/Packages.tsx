@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ModernNavButton } from '@/components/ui/ModernNavButton';
 import { usePackages, Package } from '@/hooks/usePackages';
 import { PackageCard } from '@/components/packages/PackageCard';
 import { PackageForm } from '@/components/packages/PackageForm';
@@ -22,7 +23,9 @@ export default function Packages() {
           <p className="text-muted-foreground mt-2">Manage subscription packages</p>
         </div>
         <div className="flex gap-2">
-          <Button
+          <ModernNavButton
+            title="Edit Package"
+            icon={Pencil}
             onClick={() => {
               const pkg = packages?.find(p => p.id === selectedPackageId);
               if (pkg) {
@@ -31,13 +34,14 @@ export default function Packages() {
               }
             }}
             disabled={!selectedPackageId}
-            className="bg-gradient-primary shadow-elegant"
-          >
-            <Pencil className="h-4 w-4 mr-2" />Edit Package
-          </Button>
-          <Button onClick={() => setIsFormOpen(true)} className="bg-gradient-primary shadow-elegant">
-            <Plus className="h-4 w-4 mr-2" />Add Package
-          </Button>
+            size="small"
+          />
+          <ModernNavButton
+            title="Add Package"
+            icon={Plus}
+            onClick={() => setIsFormOpen(true)}
+            size="small"
+          />
         </div>
       </motion.div>
 

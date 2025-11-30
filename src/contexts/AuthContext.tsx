@@ -105,9 +105,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     // Check if user has any active sessions
+    // Check if user is already logged in on another device
+    // BUT allow if it's the same device (re-login)
     const { data: activeSessions, error: activeError } = await supabase
       .from('authorized_devices')
-      .select('id, device_name, session_id')
+      .select('*')
       .eq('user_id', data.user.id)
       .eq('is_active', true);
 
@@ -115,15 +117,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error('Active session check error:', activeError);
     }
 
-    // If there's an active session, block the login
-    if (activeSessions && activeSessions.length > 0) {
+    const currentDeviceSession = activeSessions?.find(s => s.device_fingerprint === deviceFingerprint);
+    const otherDeviceSession = activeSessions?.find(s => s.device_fingerprint !== deviceFingerprint);
+
+    if (otherDeviceSession) {
       await supabase.auth.signOut();
       return {
         error: {
-          message: `You are already logged in on another device. Please logout first before logging in again.`
+          message: 'You are already logged in on another device. Please logout first before logging in again.'
         }
       };
     }
+
+    // If it's the same device, we just update the session
+    // If no active session, we create/update as usual;
 
     // Check if this device is authorized
     const { data: authorizedDevice, error: deviceError } = await supabase

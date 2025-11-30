@@ -6,8 +6,20 @@ import { supabase } from '@/integrations/supabase/client';
  */
 export const enrollMFA = async () => {
     try {
+        // 1. Check for existing unverified factors and remove them to prevent duplicates
+        const { data: factors, error: listError } = await supabase.auth.mfa.listFactors();
+
+        if (!listError && factors.totp) {
+            const unverifiedFactors = factors.totp.filter(f => (f.status as string) === 'unverified');
+            for (const factor of unverifiedFactors) {
+                await supabase.auth.mfa.unenroll({ factorId: factor.id });
+            }
+        }
+
+        // 2. Enroll new factor with a unique friendly name
         const { data, error } = await supabase.auth.mfa.enroll({
             factorType: 'totp',
+            friendlyName: `Nova Subs (${new Date().toLocaleTimeString()})`,
         });
 
         if (error) throw error;
