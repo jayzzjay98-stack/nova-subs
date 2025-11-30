@@ -138,12 +138,8 @@ export default function Customers() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+        className="flex justify-end items-center gap-4"
       >
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Customers</h1>
-          <p className="text-muted-foreground mt-2">Manage your customer subscriptions</p>
-        </div>
         <ModernNavButton
           title="Add Customer"
           icon={Plus}

@@ -20,16 +20,16 @@ const StatsCardComponent = ({ title, value, icon: Icon, trend, delay = 0 }: Stat
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay }}
+      transition={{ duration: 0.3, delay }}
       className="h-full"
     >
-      <div className="package-card w-full min-h-[320px]">
+      <div className="package-card w-full min-h-[240px]">
         <div className="package-card-content p-4 flex flex-col">
 
           {/* Large Icon Section */}
-          <div className="flex items-center justify-center mb-4 h-32 w-full shrink-0">
-            <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-6">
-              <Icon className="h-12 w-12 text-white" />
+          <div className="flex items-center justify-center mb-3 h-24 w-full shrink-0">
+            <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-4">
+              <Icon className="h-10 w-10 text-white" />
             </div>
           </div>
 

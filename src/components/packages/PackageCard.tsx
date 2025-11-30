@@ -22,7 +22,7 @@ const PackageCardComponent = ({ package: pkg, onEdit, onDelete, index, isSelecte
             animate={{
                 opacity: 1,
                 scale: 1,
-                transition: { delay: index * 0.1, duration: 0.3 }
+                transition: { delay: index * 0.05, duration: 0.2 }
             }}
             whileHover={{
                 y: -12,
@@ -33,10 +33,10 @@ const PackageCardComponent = ({ package: pkg, onEdit, onDelete, index, isSelecte
             className="cursor-pointer h-full"
         >
             <div className={cn(
-                "package-card w-full min-h-[320px]", // Added min-height for consistent look
+                "package-card w-full min-h-[280px]",
                 isSelected ? "ring-4 ring-primary ring-offset-2" : ""
             )}>
-                <div className="package-card-content p-4 flex flex-col">
+                <div className="package-card-content px-3 py-4 flex flex-col">
                     {/* Default Badge */}
                     {pkg.is_default && (
                         <div className="absolute top-0 left-0 z-20">
@@ -47,13 +47,15 @@ const PackageCardComponent = ({ package: pkg, onEdit, onDelete, index, isSelecte
                     )}
 
                     {/* Large Image/Icon Section */}
-                    <div className="flex items-center justify-center mb-4 h-32 w-full shrink-0">
+                    <div className="flex items-center justify-center mb-4 h-36 w-full shrink-0">
                         {pkg.image_url ? (
                             <img
                                 src={pkg.image_url}
                                 alt={pkg.name}
                                 className="h-full w-full object-contain drop-shadow-2xl"
                                 style={{ transform: 'perspective(1000px) rotateY(-10deg)' }}
+                                loading="lazy"
+                                decoding="async"
                             />
                         ) : (
                             <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-6">

@@ -127,6 +127,7 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Eczar', serif;
     /* Performance optimizations */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

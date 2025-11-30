@@ -17,11 +17,7 @@ export default function Packages() {
 
   return (
     <div className="space-y-6">
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Packages</h1>
-          <p className="text-muted-foreground mt-2">Manage subscription packages</p>
-        </div>
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex justify-end items-center">
         <div className="flex gap-2">
           <ModernNavButton
             title="Edit Package"

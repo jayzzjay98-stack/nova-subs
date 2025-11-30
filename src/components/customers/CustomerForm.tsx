@@ -66,7 +66,10 @@ export const CustomerForm = ({ open, onClose, onSubmit, customer, isEditing }: C
         // Parse date in Bangkok timezone
         const startDate = new Date(formData.start_date + 'T00:00:00+07:00');
         const endDate = new Date(startDate);
-        endDate.setDate(endDate.getDate() + selectedPackage.duration_days);
+
+        // Calculate months from duration_days (30 days = 1 month, 90 days = 3 months)
+        const months = Math.round(selectedPackage.duration_days / 30);
+        endDate.setMonth(endDate.getMonth() + months);
 
         // Format back to YYYY-MM-DD
         const year = endDate.getFullYear();
