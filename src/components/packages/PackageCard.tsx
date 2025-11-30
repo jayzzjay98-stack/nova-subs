@@ -19,9 +19,16 @@ const PackageCardComponent = ({ package: pkg, onEdit, onDelete, index, isSelecte
     return (
         <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            whileHover={{ y: -10, scale: 1.02 }}
-            transition={{ delay: index * 0.1 }}
+            animate={{
+                opacity: 1,
+                scale: 1,
+                transition: { delay: index * 0.1, duration: 0.3 }
+            }}
+            whileHover={{
+                y: -12,
+                scale: 1.05,
+                transition: { type: "spring", stiffness: 400, damping: 15, delay: 0 }
+            }}
             onClick={onSelect}
             className="cursor-pointer h-full"
         >
@@ -62,15 +69,15 @@ const PackageCardComponent = ({ package: pkg, onEdit, onDelete, index, isSelecte
                         </h3>
 
                         {pkg.price && (
-                            <p className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">
-                                {formatCurrency(pkg.price)}
-                            </p>
+                            <div className="flex items-center justify-center gap-2">
+                                <span className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">
+                                    {formatCurrency(pkg.price)}
+                                </span>
+                                <span className="text-lg text-gray-300 font-bold">
+                                    ({formatDuration(pkg.duration_days)})
+                                </span>
+                            </div>
                         )}
-
-                        <p className="text-lg font-bold text-gray-300">
-                            {pkg.duration_days === 1 ? '1 Day' : `${pkg.duration_days} Days`}
-                            <span className="block text-sm opacity-70 font-normal">({formatDuration(pkg.duration_days)})</span>
-                        </p>
 
                         {pkg.description && (
                             <p className="text-xs text-gray-400 mt-2 line-clamp-2">

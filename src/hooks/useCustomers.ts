@@ -18,6 +18,7 @@ export interface Customer {
   packages?: {
     name: string;
     duration_days: number;
+    price: number;
   };
 }
 
@@ -29,7 +30,7 @@ export const useCustomers = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('customers')
-        .select('*, packages(name, duration_days)')
+        .select('*, packages(name, duration_days, price)')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
