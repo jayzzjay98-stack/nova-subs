@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { generateDeviceFingerprint, getDeviceId, getDeviceInfo } from '@/lib/deviceFingerprint';
 import { getMFAFactors } from '@/lib/mfa';
+import { hasReachedSessionLimit, MAX_CONCURRENT_SESSIONS } from '@/lib/sessionManager';
 
 interface AuthContextType {
   user: User | null;
@@ -104,33 +105,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { error };
     }
 
-    // Check if user has any active sessions
-    // Check if user is already logged in on another device
-    // BUT allow if it's the same device (re-login)
-    const { data: activeSessions, error: activeError } = await supabase
-      .from('authorized_devices')
-      .select('*')
-      .eq('user_id', data.user.id)
-      .eq('is_active', true);
+    // Check session limits
+    const { limitReached, activeSessions } = await hasReachedSessionLimit(data.user.id, deviceFingerprint);
 
-    if (activeError && activeError.code !== 'PGRST116') {
-      console.error('Active session check error:', activeError);
-    }
-
-    const currentDeviceSession = activeSessions?.find(s => s.device_fingerprint === deviceFingerprint);
-    const otherDeviceSession = activeSessions?.find(s => s.device_fingerprint !== deviceFingerprint);
-
-    if (otherDeviceSession) {
+    if (limitReached) {
       await supabase.auth.signOut();
+      const deviceNames = activeSessions.map(s => s.device_name || 'Unknown Device').join(', ');
       return {
         error: {
-          message: 'You are already logged in on another device. Please logout first before logging in again.'
+          message: `You have reached the maximum limit of ${MAX_CONCURRENT_SESSIONS} active devices. Please logout from one of your other devices: ${deviceNames}`
         }
       };
     }
-
-    // If it's the same device, we just update the session
-    // If no active session, we create/update as usual;
 
     // Check if this device is authorized
     const { data: authorizedDevice, error: deviceError } = await supabase
@@ -145,28 +131,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     if (!authorizedDevice) {
-      // This is a new device - check if user has any authorized devices
-      const { data: existingDevices, error: checkError } = await supabase
-        .from('authorized_devices')
-        .select('id')
-        .eq('user_id', data.user.id)
-        .limit(1);
-
-      if (checkError) {
-        console.error('Check existing devices error:', checkError);
-      }
-
-      if (existingDevices && existingDevices.length > 0) {
-        // User has authorized devices, but this is not one of them
-        await supabase.auth.signOut();
-        return {
-          error: {
-            message: 'This device is not authorized. Please login from your authorized device.'
-          }
-        };
-      }
-
       // First time login - authorize this device
+      // We removed the strict whitelist check to allow adding new devices up to the session limit
       const { error: insertError } = await supabase
         .from('authorized_devices')
         .insert({

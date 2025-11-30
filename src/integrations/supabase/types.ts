@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      authorized_devices: {
+        Row: {
+          id: string
+          user_id: string
+          device_id: string
+          device_fingerprint: string
+          device_name: string | null
+          browser: string | null
+          os: string | null
+          platform: string | null
+          last_used_at: string | null
+          created_at: string | null
+          is_active: boolean | null
+          session_id: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          device_id: string
+          device_fingerprint: string
+          device_name?: string | null
+          browser?: string | null
+          os?: string | null
+          platform?: string | null
+          last_used_at?: string | null
+          created_at?: string | null
+          is_active?: boolean | null
+          session_id?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          device_id?: string
+          device_fingerprint?: string
+          device_name?: string | null
+          browser?: string | null
+          os?: string | null
+          platform?: string | null
+          last_used_at?: string | null
+          created_at?: string | null
+          is_active?: boolean | null
+          session_id?: string | null
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           auto_renew: boolean | null

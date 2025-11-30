@@ -8,6 +8,7 @@ import { getMFAStatus, unenrollMFA, getMFAFactors, verifyMFAChallenge } from '@/
 import { MFAEnrollment } from '@/components/auth/MFAEnrollment';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { terminateSession, MAX_CONCURRENT_SESSIONS, getCurrentDeviceFingerprint } from '@/lib/sessionManager';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -38,6 +39,7 @@ export default function Settings() {
   const [showEnrollment, setShowEnrollment] = useState(false);
   const [devices, setDevices] = useState<Device[]>([]);
   const [disableCode, setDisableCode] = useState('');
+  const [currentFingerprint, setCurrentFingerprint] = useState<string>('');
 
   const [loading, setLoading] = useState(true);
   const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
@@ -55,6 +57,10 @@ export default function Settings() {
       if (mfaStatus.factors.length > 0) {
         setMfaFactorId(mfaStatus.factors[0].id);
       }
+
+      // Get current device fingerprint
+      const fingerprint = await getCurrentDeviceFingerprint();
+      setCurrentFingerprint(fingerprint);
 
       // Fetch devices
       const { data: devicesData, error } = await supabase
@@ -114,6 +120,26 @@ export default function Settings() {
       toast.error('Failed to remove device');
     }
   };
+
+  const handleLogoutDevice = async (deviceId: string) => {
+    try {
+      const result = await terminateSession(deviceId);
+
+      if (!result.success) throw new Error(result.error);
+
+      // Update local state
+      setDevices(devices.map(d =>
+        d.id === deviceId ? { ...d, is_active: false, session_id: null } : d
+      ));
+
+      toast.success('Session terminated successfully');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Failed to logout device');
+    }
+  };
+
+  const activeSessionCount = devices.filter(d => d.is_active).length;
 
   if (loading) {
     return <div className="p-8 text-center">Loading settings...</div>;
@@ -220,6 +246,11 @@ export default function Settings() {
           <CardDescription>
             Manage devices that are allowed to access your account.
           </CardDescription>
+          <div className="mt-2">
+            <Badge variant={activeSessionCount >= MAX_CONCURRENT_SESSIONS ? "destructive" : "secondary"}>
+              {activeSessionCount}/{MAX_CONCURRENT_SESSIONS} Active Sessions
+            </Badge>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -237,8 +268,11 @@ export default function Settings() {
                     <div className="flex items-center gap-2">
                       <p className="font-medium">{device.device_name || 'Unknown Device'}</p>
                       {device.is_active && (
-                        <Badge variant="outline" className="text-green-500 border-green-500/50 text-[10px] px-1 py-0 h-4">
-                          Current Session
+                        <Badge variant="outline" className={`text-[10px] px-1 py-0 h-4 ${device.device_fingerprint === currentFingerprint
+                            ? "text-green-500 border-green-500/50"
+                            : "text-blue-500 border-blue-500/50"
+                          }`}>
+                          {device.device_fingerprint === currentFingerprint ? "Current Device" : "Active Session"}
                         </Badge>
                       )}
                     </div>
@@ -248,7 +282,7 @@ export default function Settings() {
                   </div>
                 </div>
 
-                {!device.is_active && (
+                {!device.is_active ? (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button variant="ghost" size="icon" className="text-red-400 hover:text-red-300 hover:bg-red-950/30">
@@ -270,6 +304,31 @@ export default function Settings() {
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
+                ) : (
+                  device.device_fingerprint !== currentFingerprint && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="sm" className="text-orange-400 hover:text-orange-300 hover:bg-orange-950/30">
+                          <LogOut className="h-4 w-4 mr-2" />
+                          Logout
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Logout Device?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to log out this device? The user will be signed out immediately.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleLogoutDevice(device.id)} className="bg-orange-500 hover:bg-orange-600">
+                            Logout
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )
                 )}
               </div>
             ))}
