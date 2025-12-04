@@ -33,7 +33,7 @@ export const CustomerForm = ({ open, onClose, onSubmit, customer, isEditing }: C
     return `${year}-${month}-${day}`;
   };
 
-  const [formData, setFormData] = useState({
+  const getInitialFormData = () => ({
     name: '',
     email: '',
     service_type: 'basic',
@@ -44,20 +44,29 @@ export const CustomerForm = ({ open, onClose, onSubmit, customer, isEditing }: C
     notes: '',
   });
 
+  const [formData, setFormData] = useState(getInitialFormData());
+
+  // Reset form when dialog opens/closes
   useEffect(() => {
-    if (customer) {
-      setFormData({
-        name: customer.name,
-        email: customer.email,
-        service_type: customer.service_type,
-        package_id: customer.package_id || '',
-        start_date: customer.start_date,
-        end_date: customer.end_date,
-        auto_renew: customer.auto_renew,
-        notes: customer.notes || '',
-      });
+    if (open) {
+      if (customer) {
+        // If editing, populate with customer data
+        setFormData({
+          name: customer.name,
+          email: customer.email,
+          service_type: customer.service_type,
+          package_id: customer.package_id || '',
+          start_date: customer.start_date,
+          end_date: customer.end_date,
+          auto_renew: customer.auto_renew,
+          notes: customer.notes || '',
+        });
+      } else {
+        // If adding new, reset to initial state
+        setFormData(getInitialFormData());
+      }
     }
-  }, [customer]);
+  }, [open, customer]);
 
   useEffect(() => {
     if (formData.package_id && formData.start_date) {
@@ -67,9 +76,8 @@ export const CustomerForm = ({ open, onClose, onSubmit, customer, isEditing }: C
         const startDate = new Date(formData.start_date + 'T00:00:00+07:00');
         const endDate = new Date(startDate);
 
-        // Calculate months from duration_days (30 days = 1 month, 90 days = 3 months)
-        const months = Math.round(selectedPackage.duration_days / 30);
-        endDate.setMonth(endDate.getMonth() + months);
+        // Add duration_days directly to get the end date
+        endDate.setDate(endDate.getDate() + selectedPackage.duration_days);
 
         // Format back to YYYY-MM-DD
         const year = endDate.getFullYear();

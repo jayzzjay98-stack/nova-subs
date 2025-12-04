@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css?family=Raleway");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -138,6 +139,7 @@ All colors MUST be HSL.
     scroll-behavior: smooth;
   }
 
+
   /* Reduce motion for users who prefer it */
   @media (prefers-reduced-motion: reduce) {
 
@@ -149,4 +151,248 @@ All colors MUST be HSL.
       transition-duration: 0.01ms !important;
     }
   }
+}
+
+/* Glowing Navigation Button Styles */
+
+.glowing-nav-btn {
+  position: relative;
+  color: #ffffff;
+  cursor: pointer;
+  padding: 0.5em 1.2em;
+  border: 0.12em solid hsl(215 80% 60%);
+  border-radius: 0.45em;
+  background: transparent;
+  perspective: 2em;
+  font-family: "Raleway", sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  transition: all 0.3s ease;
+  box-shadow: inset 0px 0px 0.5em 0px hsl(215 80% 60%),
+    0px 0px 0.5em 0px hsl(215 80% 60%);
+}
+
+.glowing-nav-btn.active {
+  color: rgba(255, 255, 255, 0.9);
+  background-color: hsl(215 80% 60%);
+  box-shadow: 0 0 2em 0.2em hsl(215 80% 60%);
+}
+
+.glowing-nav-txt {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  text-shadow: 0 0 0.125em hsl(0 0% 100% / 0.3),
+    0 0 0.45em hsl(215 80% 60%);
+}
+
+.glowing-nav-btn.active .glowing-nav-txt {
+  text-shadow: none;
+}
+
+.glowing-nav-icon {
+  width: 1.1em;
+  height: 1.1em;
+  filter: drop-shadow(0 0 0.3em hsl(215 80% 60%));
+}
+
+.glowing-nav-btn.active .glowing-nav-icon {
+  filter: none;
+}
+
+.glowing-nav-btn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  opacity: 0.7;
+  filter: blur(0.8em);
+  transform: translateY(120%) rotateX(95deg) scale(1, 0.35);
+  background: hsl(215 80% 60%);
+  pointer-events: none;
+}
+
+.glowing-nav-btn::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0;
+  z-index: -1;
+  background-color: hsl(215 80% 60%);
+  box-shadow: 0 0 2em 0.2em hsl(215 80% 60%);
+  transition: opacity 100ms linear;
+}
+
+.glowing-nav-btn:hover {
+  color: rgba(0, 0, 0, 0.8);
+  text-shadow: none;
+  transform: translateY(-2px);
+}
+
+.glowing-nav-btn:hover .glowing-nav-txt {
+  text-shadow: none;
+}
+
+.glowing-nav-btn:hover::before {
+  filter: blur(1.2em);
+  opacity: 1;
+}
+
+.glowing-nav-btn:hover::after {
+  opacity: 1;
+}
+
+@keyframes text-flicker {
+  0% {
+    opacity: 0.1;
+  }
+
+  2% {
+    opacity: 1;
+  }
+
+  8% {
+    opacity: 0.1;
+  }
+
+  9% {
+    opacity: 1;
+  }
+
+  12% {
+    opacity: 0.1;
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  25% {
+    opacity: 0.3;
+  }
+
+  30% {
+    opacity: 1;
+  }
+
+  70% {
+    opacity: 0.7;
+  }
+
+  72% {
+    opacity: 0.2;
+  }
+
+  77% {
+    opacity: 0.9;
+  }
+
+  100% {
+    opacity: 0.9;
+  }
+}
+
+@keyframes border-flicker {
+  0% {
+    opacity: 0.1;
+  }
+
+  2% {
+    opacity: 1;
+  }
+
+  4% {
+    opacity: 0.1;
+  }
+
+  8% {
+    opacity: 1;
+  }
+
+  70% {
+    opacity: 0.7;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Electric Border Styles */
+.electric-border-container {
+  position: relative;
+}
+
+.electric-border-static {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid transparent;
+  background: linear-gradient(var(--border-color), var(--border-color)) padding-box,
+    linear-gradient(var(--border-color), var(--border-color)) border-box;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+.electric-border-animated {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.electric-border-gradient {
+  position: absolute;
+  inset: -200%;
+  /* Make it larger to cover rotation */
+  background: conic-gradient(from 0deg, transparent 0 340deg, var(--border-color) 360deg);
+  animation: rotate var(--anim-duration, 2s) linear infinite;
+  opacity: 0.3;
+  /* Always visible but dim */
+  transition: opacity 0.5s ease;
+}
+
+.group:hover .electric-border-gradient {
+  opacity: 1;
+  /* Bright on hover */
+}
+
+.electric-border-mask {
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  background: var(--background);
+  /* Use theme background */
+  z-index: 10;
+}
+
+.electric-border-content {
+  position: relative;
+  z-index: 20;
+  height: 100%;
+}
+
+.animate-rotate {
+  animation: rotate linear infinite;
 }

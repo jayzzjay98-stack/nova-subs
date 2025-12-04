@@ -39,7 +39,7 @@ export default function Customers() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
   const [selectedPackage, setSelectedPackage] = useState<string>('all');
-  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState<string>('active');
 
   // Get unique package combinations (name + duration) used by customers - memoized
   const usedPackagesData = useMemo(() =>
@@ -67,7 +67,31 @@ export default function Customers() {
           matchesPackage = packageKey === selectedPackage;
         }
 
-        const matchesStatus = selectedStatus === 'all' || customer.status === selectedStatus;
+        // Status filtering with special logic for expired customers
+        let matchesStatus = true;
+        if (selectedStatus !== 'all') {
+          // Calculate days since expiration
+          const endDate = new Date(customer.end_date + 'T00:00:00+07:00');
+          const now = new Date();
+          const diffTime = endDate.getTime() - now.getTime();
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+          // If status filter is 'active', hide customers expired for more than 2 days
+          if (selectedStatus === 'active') {
+            // Hide if expired more than 2 days ago
+            if (diffDays < -2) {
+              matchesStatus = false;
+            } else if (customer.status !== 'active' && customer.status !== 'expiring_soon') {
+              // Also hide if status is expired but within 2 days
+              matchesStatus = diffDays >= -2;
+            } else {
+              matchesStatus = customer.status === 'active' || customer.status === 'expiring_soon';
+            }
+          } else {
+            // For other filters (expiring_soon, expired), use normal matching
+            matchesStatus = customer.status === selectedStatus;
+          }
+        }
 
         return matchesSearch && matchesPackage && matchesStatus;
       }

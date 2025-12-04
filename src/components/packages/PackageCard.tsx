@@ -18,29 +18,21 @@ interface PackageCardProps {
 const PackageCardComponent = ({ package: pkg, onEdit, onDelete, index, isSelected, onSelect }: PackageCardProps) => {
     return (
         <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{
-                opacity: 1,
-                scale: 1,
-                transition: { delay: index * 0.05, duration: 0.2 }
-            }}
-            whileHover={{
-                y: -12,
-                scale: 1.05,
-                transition: { type: "spring", stiffness: 400, damping: 15, delay: 0 }
-            }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: index * 0.05 }}
             onClick={onSelect}
             className="cursor-pointer h-full"
         >
             <div className={cn(
-                "package-card w-full min-h-[280px]",
-                isSelected ? "ring-4 ring-primary ring-offset-2" : ""
+                "package-card w-full min-h-[280px] bg-gray-900/50 backdrop-blur-sm rounded-xl overflow-hidden relative",
+                isSelected ? "ring-2 ring-cyan-400" : ""
             )}>
-                <div className="package-card-content px-3 py-4 flex flex-col">
+                <div className="package-card-content px-3 py-4 flex flex-col h-full">
                     {/* Default Badge */}
                     {pkg.is_default && (
                         <div className="absolute top-0 left-0 z-20">
-                            <span className="text-xs bg-white/90 text-purple-600 px-3 py-1 rounded-br-lg font-semibold shadow-sm">
+                            <span className="text-xs bg-cyan-500/90 text-white px-3 py-1 rounded-br-lg font-semibold shadow-sm backdrop-blur-md">
                                 Default
                             </span>
                         </div>
@@ -52,37 +44,36 @@ const PackageCardComponent = ({ package: pkg, onEdit, onDelete, index, isSelecte
                             <img
                                 src={pkg.image_url}
                                 alt={pkg.name}
-                                className="h-full w-full object-contain drop-shadow-2xl"
-                                style={{ transform: 'perspective(1000px) rotateY(-10deg)' }}
+                                className="h-full w-full object-contain drop-shadow-2xl transition-transform duration-500 hover:scale-110"
                                 loading="lazy"
                                 decoding="async"
                             />
                         ) : (
-                            <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-6">
-                                <PackageIcon className="h-12 w-12 text-white" />
+                            <div className="bg-white/5 backdrop-blur-md rounded-full p-6 ring-1 ring-white/10">
+                                <PackageIcon className="h-12 w-12 text-cyan-400" />
                             </div>
                         )}
                     </div>
 
                     {/* Content Section */}
-                    <div className="text-center space-y-2 flex-grow flex flex-col justify-center">
+                    <div className="text-center space-y-3 flex-grow flex flex-col justify-center relative z-10">
                         <h3 className="text-xl font-bold text-white tracking-wide">
                             {pkg.name}
                         </h3>
 
-                        {pkg.price && (
+                        {pkg.price !== undefined && (
                             <div className="flex items-center justify-center gap-2">
                                 <span className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">
                                     {formatCurrency(pkg.price)}
                                 </span>
-                                <span className="text-lg text-gray-300 font-bold">
-                                    ({formatDuration(pkg.duration_days)})
+                                <span className="text-sm text-gray-400 font-medium bg-white/5 px-2 py-0.5 rounded-full">
+                                    {formatDuration(pkg.duration_days)}
                                 </span>
                             </div>
                         )}
 
                         {pkg.description && (
-                            <p className="text-xs text-gray-400 mt-2 line-clamp-2">
+                            <p className="text-xs text-gray-400 mt-2 line-clamp-2 px-2">
                                 {pkg.description}
                             </p>
                         )}
@@ -93,5 +84,4 @@ const PackageCardComponent = ({ package: pkg, onEdit, onDelete, index, isSelecte
     );
 };
 
-// Memoize to prevent unnecessary re-renders
 export const PackageCard = React.memo(PackageCardComponent);

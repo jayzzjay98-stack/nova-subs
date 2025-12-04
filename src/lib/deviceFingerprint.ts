@@ -1,4 +1,5 @@
 import Bowser from 'bowser';
+import { safeStorage } from './storage';
 
 /**
  * Generate a unique device fingerprint based on browser and system information
@@ -60,12 +61,12 @@ const hashDeviceData = async (data: string): Promise<string> => {
  * Get or create device ID stored in localStorage
  */
 export const getDeviceId = (): string => {
-    let deviceId = localStorage.getItem('device_id');
+    let deviceId = safeStorage.getItem('device_id');
 
     if (!deviceId) {
         // Generate a random device ID
         deviceId = crypto.randomUUID();
-        localStorage.setItem('device_id', deviceId);
+        safeStorage.setItem('device_id', deviceId);
     }
 
     return deviceId;

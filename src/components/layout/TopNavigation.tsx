@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Package as PackageIcon, Settings, LogOut, MoonIcon, SunIcon } from 'lucide-react';
+import { LayoutDashboard, Users, BarChart3, Package as PackageIcon, Settings, LogOut, MoonIcon, SunIcon } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ const menuItems = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
   { title: 'Customers', url: '/customers', icon: Users },
   { title: 'Packages', url: '/packages', icon: PackageIcon },
+  { title: 'Reports', url: '/reports', icon: BarChart3 },
 ];
 
 interface TopNavigationProps {

@@ -1,6 +1,5 @@
 import React from 'react';
 import { LucideIcon } from 'lucide-react';
-import './ModernNavButton.css';
 
 interface ModernNavButtonProps {
     title: string;
@@ -22,24 +21,15 @@ export function ModernNavButton({
     disabled = false
 }: ModernNavButtonProps) {
     return (
-        <div
-            className={`modern-nav-button ${isActive ? 'active' : ''} ${size === 'small' ? 'small' : ''} ${disabled ? 'disabled' : ''} ${className}`}
+        <button
+            className={`glowing-nav-btn ${isActive ? 'active' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
             onClick={!disabled ? onClick : undefined}
-            role="button"
-            tabIndex={disabled ? -1 : 0}
+            disabled={disabled}
         >
-            <strong>
-                <Icon size={size === 'small' ? 14 : 16} />
+            <span className="glowing-nav-txt">
+                <Icon className="glowing-nav-icon" size={size === 'small' ? 14 : 16} />
                 {title}
-            </strong>
-            <div className="container-stars">
-                <div className="stars"></div>
-            </div>
-
-            <div className="glow">
-                <div className="circle"></div>
-                <div className="circle"></div>
-            </div>
-        </div>
+            </span>
+        </button>
     );
 }
