@@ -39,7 +39,8 @@ export default function Customers() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
   const [selectedPackage, setSelectedPackage] = useState<string>('all');
-  const [selectedStatus, setSelectedStatus] = useState<string>('active');
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'active' | 'expired'>('active');
 
   // Get unique package combinations (name + duration) used by customers - memoized
   const usedPackagesData = useMemo(() =>
@@ -67,36 +68,35 @@ export default function Customers() {
           matchesPackage = packageKey === selectedPackage;
         }
 
-        // Status filtering with special logic for expired customers
-        let matchesStatus = true;
-        if (selectedStatus !== 'all') {
-          // Calculate days since expiration
-          const endDate = new Date(customer.end_date + 'T00:00:00+07:00');
-          const now = new Date();
-          const diffTime = endDate.getTime() - now.getTime();
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        // Calculate days until expiration
+        const endDate = new Date(customer.end_date + 'T00:00:00+07:00');
+        const now = new Date();
+        const diffTime = endDate.getTime() - now.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const isExpired = diffDays <= 0;
 
-          // If status filter is 'active', hide customers expired for more than 2 days
+        // Filter based on viewMode first
+        if (viewMode === 'active' && isExpired) {
+          return false; // Hide expired customers in active view
+        }
+        if (viewMode === 'expired' && !isExpired) {
+          return false; // Hide non-expired customers in expired view
+        }
+
+        // Additional status filtering (only applies in active viewMode)
+        let matchesStatus = true;
+        if (viewMode === 'active' && selectedStatus !== 'all') {
           if (selectedStatus === 'active') {
-            // Hide if expired more than 2 days ago
-            if (diffDays < -2) {
-              matchesStatus = false;
-            } else if (customer.status !== 'active' && customer.status !== 'expiring_soon') {
-              // Also hide if status is expired but within 2 days
-              matchesStatus = diffDays >= -2;
-            } else {
-              matchesStatus = customer.status === 'active' || customer.status === 'expiring_soon';
-            }
-          } else {
-            // For other filters (expiring_soon, expired), use normal matching
-            matchesStatus = customer.status === selectedStatus;
+            matchesStatus = diffDays > 7;
+          } else if (selectedStatus === 'expiring_soon') {
+            matchesStatus = diffDays > 0 && diffDays <= 7;
           }
         }
 
         return matchesSearch && matchesPackage && matchesStatus;
       }
     ),
-    [customers, searchQuery, selectedPackage, selectedStatus]
+    [customers, searchQuery, selectedPackage, selectedStatus, viewMode]
   );
 
   const handleSort = (field: 'name' | 'package' | 'end_date') => {
@@ -206,17 +206,47 @@ export default function Customers() {
                   </SelectContent>
                 </Select>
 
-                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="All Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="expiring_soon">Expiring Soon</SelectItem>
-                    <SelectItem value="expired">Expired</SelectItem>
-                  </SelectContent>
-                </Select>
+                {/* Only show status filter in active view mode */}
+                {viewMode === 'active' && (
+                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="All Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="expiring_soon">Expiring Soon</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+
+                {/* View Mode Tabs - Moved to right */}
+                <div className="flex gap-2 ml-auto">
+                  <Button
+                    variant={viewMode === 'active' ? 'default' : 'outline'}
+                    onClick={() => {
+                      setViewMode('active');
+                      setCurrentPage(1);
+                    }}
+                    className={viewMode === 'active'
+                      ? 'bg-gradient-to-r from-cyan-400 to-blue-600 text-white shadow-[0_0_15px_rgba(6,182,212,0.5)] border-0'
+                      : 'border-cyan-400/50 text-cyan-400 hover:bg-cyan-400/10'}
+                  >
+                    ลูกค้าปัจจุบัน
+                  </Button>
+                  <Button
+                    variant={viewMode === 'expired' ? 'default' : 'outline'}
+                    onClick={() => {
+                      setViewMode('expired');
+                      setCurrentPage(1);
+                    }}
+                    className={viewMode === 'expired'
+                      ? 'bg-gradient-to-r from-red-500 to-pink-600 text-white shadow-[0_0_15px_rgba(239,68,68,0.5)] border-0'
+                      : 'border-red-400/50 text-red-400 hover:bg-red-400/10'}
+                  >
+                    ลูกค้าหมดกำหนด
+                  </Button>
+                </div>
               </div>
 
               <div className="rounded-md border">
