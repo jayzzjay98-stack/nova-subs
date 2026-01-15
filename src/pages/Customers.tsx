@@ -307,78 +307,91 @@ export default function Customers() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      paginatedCustomers.map((customer, index) => (
-                        <motion.tr
-                          key={customer.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                          className="group hover:bg-white/5 transition-all duration-300 hover:shadow-[0_0_20px_rgba(59,130,246,0.15)] border-b border-white/5"
-                        >
-                          <TableCell className="font-medium">{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
-                          <TableCell className="font-medium text-lg">{customer.name}</TableCell>
-                          <TableCell>{customer.email}</TableCell>
-                          <TableCell className="text-lg font-medium">
-                            {customer.packages?.name ?
-                              `${customer.packages.name} (${formatDuration(customer.packages.duration_days)})` :
-                              'N/A'
-                            }
-                          </TableCell>
-                          <TableCell>
-                            <span
-                              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold shadow-lg
-                            ${customer.status === 'active' ? 'bg-green-500/20 text-green-400 border border-green-500/30 shadow-green-500/20' : ''}
-                            ${customer.status === 'expired' ? 'bg-red-500/20 text-red-400 border border-red-500/30 shadow-red-500/20' : ''}
-                            ${customer.status === 'expiring_soon' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 shadow-yellow-500/20' : ''}
-                            `}
-                            >
-                              {customer.status.replace('_', ' ').toUpperCase()}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-lg">{formatDate(customer.end_date)}</TableCell>
-                          <TableCell>
-                            {(() => {
-                              const end = new Date(customer.end_date + 'T00:00:00+07:00');
-                              const now = new Date();
-                              const diffTime = end.getTime() - now.getTime();
-                              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                      paginatedCustomers.map((customer, index) => {
+                        const calculatedStatus = (() => {
+                          const end = new Date(customer.end_date + 'T00:00:00+07:00');
+                          const now = new Date();
+                          const diffTime = end.getTime() - now.getTime();
+                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-                              let colorClass = "text-green-500"; // Default > 7 days
-                              if (diffDays <= 0) colorClass = "text-red-500";
-                              else if (diffDays <= 7) colorClass = "text-yellow-500";
+                          if (diffDays <= 0) return 'expired';
+                          if (diffDays <= 7) return 'expiring_soon';
+                          return 'active';
+                        })();
 
-                              return (
-                                <span className={`text-lg font-bold ${colorClass}`}>
-                                  {diffDays > 0 ? `${diffDays} Days` : 'Expired'}
-                                </span>
-                              );
-                            })()}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => {
-                                  setEditingCustomer(customer);
-                                  setIsFormOpen(true);
-                                }}
-                                className="h-8 w-8 rounded-lg bg-gradient-to-r from-cyan-400 to-blue-600 text-white shadow-[0_0_10px_rgba(6,182,212,0.5)] hover:shadow-[0_0_15px_rgba(6,182,212,0.8)] hover:scale-105 transition-all duration-300 border-0"
+                        return (
+                          <motion.tr
+                            key={customer.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            className="group hover:bg-white/5 transition-all duration-300 hover:shadow-[0_0_20px_rgba(59,130,246,0.15)] border-b border-white/5"
+                          >
+                            <TableCell className="font-medium">{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
+                            <TableCell className="font-medium text-lg">{customer.name}</TableCell>
+                            <TableCell>{customer.email}</TableCell>
+                            <TableCell className="text-lg font-medium">
+                              {customer.packages?.name ?
+                                `${customer.packages.name} (${formatDuration(customer.packages.duration_days)})` :
+                                'N/A'
+                              }
+                            </TableCell>
+                            <TableCell>
+                              <span
+                                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold shadow-lg
+                                  ${calculatedStatus === 'active' ? 'bg-green-500/20 text-green-400 border border-green-500/30 shadow-green-500/20' : ''}
+                                  ${calculatedStatus === 'expired' ? 'bg-red-500/20 text-red-400 border border-red-500/30 shadow-red-500/20' : ''}
+                                  ${calculatedStatus === 'expiring_soon' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 shadow-yellow-500/20' : ''}
+                                  `}
                               >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setDeletingCustomer(customer)}
-                                className="h-8 w-8 rounded-lg bg-gradient-to-r from-red-500 to-pink-600 text-white shadow-[0_0_10px_rgba(239,68,68,0.5)] hover:shadow-[0_0_15px_rgba(239,68,68,0.8)] hover:scale-105 transition-all duration-300 border-0"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </motion.tr>
-                      ))
+                                {calculatedStatus.replace('_', ' ').toUpperCase()}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-lg">{formatDate(customer.end_date)}</TableCell>
+                            <TableCell>
+                              {(() => {
+                                const end = new Date(customer.end_date + 'T00:00:00+07:00');
+                                const now = new Date();
+                                const diffTime = end.getTime() - now.getTime();
+                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                                let colorClass = "text-green-500"; // Default > 7 days
+                                if (diffDays <= 0) colorClass = "text-red-500";
+                                else if (diffDays <= 7) colorClass = "text-yellow-500";
+
+                                return (
+                                  <span className={`text-lg font-bold ${colorClass}`}>
+                                    {diffDays > 0 ? `${diffDays} Days` : 'Expired'}
+                                  </span>
+                                );
+                              })()}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => {
+                                    setEditingCustomer(customer);
+                                    setIsFormOpen(true);
+                                  }}
+                                  className="h-8 w-8 rounded-lg bg-gradient-to-r from-cyan-400 to-blue-600 text-white shadow-[0_0_10px_rgba(6,182,212,0.5)] hover:shadow-[0_0_15px_rgba(6,182,212,0.8)] hover:scale-105 transition-all duration-300 border-0"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setDeletingCustomer(customer)}
+                                  className="h-8 w-8 rounded-lg bg-gradient-to-r from-red-500 to-pink-600 text-white shadow-[0_0_10px_rgba(239,68,68,0.5)] hover:shadow-[0_0_15px_rgba(239,68,68,0.8)] hover:scale-105 transition-all duration-300 border-0"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </motion.tr>
+                        );
+                      })
                     )}
                   </TableBody>
                 </Table>
