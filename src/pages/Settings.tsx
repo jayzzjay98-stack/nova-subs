@@ -8,7 +8,11 @@ import { getMFAStatus, unenrollMFA, getMFAFactors, verifyMFAChallenge } from '@/
 import { MFAEnrollment } from '@/components/auth/MFAEnrollment';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { terminateSession, MAX_CONCURRENT_SESSIONS, getCurrentDeviceFingerprint } from '@/lib/sessionManager';
+import {
+  terminateSession,
+  MAX_CONCURRENT_SESSIONS,
+  getCurrentDeviceFingerprint,
+} from '@/lib/sessionManager';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -20,7 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from '@/components/ui/alert-dialog';
 import { formatDistanceToNow } from 'date-fns';
 
 interface Device {
@@ -51,25 +55,26 @@ export default function Settings() {
   const fetchSettings = async () => {
     try {
       setLoading(true);
-      // Check MFA status
-      const mfaStatus = await getMFAFactors();
+
+      // Parallelize all independent async calls (async-parallel)
+      const [mfaStatus, fingerprint, devicesResult] = await Promise.all([
+        getMFAFactors(),
+        getCurrentDeviceFingerprint(),
+        supabase.from('authorized_devices').select('*').order('last_used_at', { ascending: false }),
+      ]);
+
+      // Process MFA status
       setMfaEnabled(mfaStatus.hasEnabledMFA);
       if (mfaStatus.factors.length > 0) {
         setMfaFactorId(mfaStatus.factors[0].id);
       }
 
-      // Get current device fingerprint
-      const fingerprint = await getCurrentDeviceFingerprint();
+      // Set device fingerprint
       setCurrentFingerprint(fingerprint);
 
-      // Fetch devices
-      const { data: devicesData, error } = await supabase
-        .from('authorized_devices')
-        .select('*')
-        .order('last_used_at', { ascending: false });
-
-      if (error) throw error;
-      setDevices(devicesData || []);
+      // Process devices
+      if (devicesResult.error) throw devicesResult.error;
+      setDevices(devicesResult.data || []);
     } catch (error) {
       console.error('Error fetching settings:', error);
       toast.error('Failed to load settings');
@@ -107,14 +112,11 @@ export default function Settings() {
 
   const handleRemoveDevice = async (deviceId: string) => {
     try {
-      const { error } = await supabase
-        .from('authorized_devices')
-        .delete()
-        .eq('id', deviceId);
+      const { error } = await supabase.from('authorized_devices').delete().eq('id', deviceId);
 
       if (error) throw error;
 
-      setDevices(devices.filter(d => d.id !== deviceId));
+      setDevices(devices.filter((d) => d.id !== deviceId));
       toast.success('Device removed successfully');
     } catch (error) {
       toast.error('Failed to remove device');
@@ -128,9 +130,9 @@ export default function Settings() {
       if (!result.success) throw new Error(result.error);
 
       // Update local state
-      setDevices(devices.map(d =>
-        d.id === deviceId ? { ...d, is_active: false, session_id: null } : d
-      ));
+      setDevices(
+        devices.map((d) => (d.id === deviceId ? { ...d, is_active: false, session_id: null } : d)),
+      );
 
       toast.success('Session terminated successfully');
     } catch (error) {
@@ -139,7 +141,7 @@ export default function Settings() {
     }
   };
 
-  const activeSessionCount = devices.filter(d => d.is_active).length;
+  const activeSessionCount = devices.filter((d) => d.is_active).length;
 
   if (loading) {
     return <div className="p-8 text-center">Loading settings...</div>;
@@ -164,8 +166,11 @@ export default function Settings() {
                 Add an extra layer of security to your account using an authenticator app.
               </CardDescription>
             </div>
-            <Badge variant={mfaEnabled ? "default" : "secondary"} className={mfaEnabled ? "bg-green-500/20 text-green-500" : ""}>
-              {mfaEnabled ? "Enabled" : "Disabled"}
+            <Badge
+              variant={mfaEnabled ? 'default' : 'secondary'}
+              className={mfaEnabled ? 'bg-green-500/20 text-green-500' : ''}
+            >
+              {mfaEnabled ? 'Enabled' : 'Disabled'}
             </Badge>
           </div>
         </CardHeader>
@@ -183,13 +188,16 @@ export default function Settings() {
               </div>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm">Disable 2FA</Button>
+                  <Button variant="destructive" size="sm">
+                    Disable 2FA
+                  </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>Disable Two-Factor Authentication?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      To disable 2FA, please enter the 6-digit code from your authenticator app to confirm it's you.
+                      To disable 2FA, please enter the 6-digit code from your authenticator app to
+                      confirm it's you.
                     </AlertDialogDescription>
                     <div className="py-4">
                       <Input
@@ -225,7 +233,9 @@ export default function Settings() {
                 </div>
                 <div>
                   <p className="font-medium">2FA is not enabled</p>
-                  <p className="text-sm text-muted-foreground">Protect your account with Google Authenticator or Authy.</p>
+                  <p className="text-sm text-muted-foreground">
+                    Protect your account with Google Authenticator or Authy.
+                  </p>
                 </div>
               </div>
               <Button onClick={() => setShowEnrollment(true)} className="bg-gradient-primary">
@@ -243,11 +253,11 @@ export default function Settings() {
             <Laptop className="h-5 w-5 text-purple-500" />
             Authorized Devices
           </CardTitle>
-          <CardDescription>
-            Manage devices that are allowed to access your account.
-          </CardDescription>
+          <CardDescription>Manage devices that are allowed to access your account.</CardDescription>
           <div className="mt-2">
-            <Badge variant={activeSessionCount >= MAX_CONCURRENT_SESSIONS ? "destructive" : "secondary"}>
+            <Badge
+              variant={activeSessionCount >= MAX_CONCURRENT_SESSIONS ? 'destructive' : 'secondary'}
+            >
               {activeSessionCount}/{MAX_CONCURRENT_SESSIONS} Active Sessions
             </Badge>
           </div>
@@ -255,29 +265,46 @@ export default function Settings() {
         <CardContent>
           <div className="space-y-4">
             {devices.map((device) => (
-              <div key={device.id} className="flex items-center justify-between p-4 border border-white/10 rounded-lg bg-white/5">
+              <div
+                key={device.id}
+                className="flex items-center justify-between p-4 border border-white/10 rounded-lg bg-white/5"
+              >
                 <div className="flex items-center gap-4">
-                  <div className={`p-3 rounded-full ${device.is_active ? 'bg-green-500/20' : 'bg-gray-500/20'}`}>
-                    {device.os.toLowerCase().includes('ios') || device.os.toLowerCase().includes('android') ? (
-                      <Smartphone className={`h-6 w-6 ${device.is_active ? 'text-green-500' : 'text-gray-400'}`} />
+                  <div
+                    className={`p-3 rounded-full ${device.is_active ? 'bg-green-500/20' : 'bg-gray-500/20'}`}
+                  >
+                    {device.os.toLowerCase().includes('ios') ||
+                    device.os.toLowerCase().includes('android') ? (
+                      <Smartphone
+                        className={`h-6 w-6 ${device.is_active ? 'text-green-500' : 'text-gray-400'}`}
+                      />
                     ) : (
-                      <Laptop className={`h-6 w-6 ${device.is_active ? 'text-green-500' : 'text-gray-400'}`} />
+                      <Laptop
+                        className={`h-6 w-6 ${device.is_active ? 'text-green-500' : 'text-gray-400'}`}
+                      />
                     )}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
                       <p className="font-medium">{device.device_name || 'Unknown Device'}</p>
                       {device.is_active && (
-                        <Badge variant="outline" className={`text-[10px] px-1 py-0 h-4 ${device.device_fingerprint === currentFingerprint
-                            ? "text-green-500 border-green-500/50"
-                            : "text-blue-500 border-blue-500/50"
-                          }`}>
-                          {device.device_fingerprint === currentFingerprint ? "Current Device" : "Active Session"}
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] px-1 py-0 h-4 ${
+                            device.device_fingerprint === currentFingerprint
+                              ? 'text-green-500 border-green-500/50'
+                              : 'text-blue-500 border-blue-500/50'
+                          }`}
+                        >
+                          {device.device_fingerprint === currentFingerprint
+                            ? 'Current Device'
+                            : 'Active Session'}
                         </Badge>
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {device.browser} on {device.os} • Last active {formatDistanceToNow(new Date(device.last_used_at))} ago
+                      {device.browser} on {device.os} • Last active{' '}
+                      {formatDistanceToNow(new Date(device.last_used_at))} ago
                     </p>
                   </div>
                 </div>
@@ -285,7 +312,11 @@ export default function Settings() {
                 {!device.is_active ? (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-red-400 hover:text-red-300 hover:bg-red-950/30">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-red-400 hover:text-red-300 hover:bg-red-950/30"
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </AlertDialogTrigger>
@@ -293,12 +324,16 @@ export default function Settings() {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Remove Device?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This device will no longer be able to access your account. You will need to re-authorize it to use it again.
+                          This device will no longer be able to access your account. You will need
+                          to re-authorize it to use it again.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleRemoveDevice(device.id)} className="bg-red-500 hover:bg-red-600">
+                        <AlertDialogAction
+                          onClick={() => handleRemoveDevice(device.id)}
+                          className="bg-red-500 hover:bg-red-600"
+                        >
                           Remove
                         </AlertDialogAction>
                       </AlertDialogFooter>
@@ -308,7 +343,11 @@ export default function Settings() {
                   device.device_fingerprint !== currentFingerprint && (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="sm" className="text-orange-400 hover:text-orange-300 hover:bg-orange-950/30">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-orange-400 hover:text-orange-300 hover:bg-orange-950/30"
+                        >
                           <LogOut className="h-4 w-4 mr-2" />
                           Logout
                         </Button>
@@ -317,12 +356,16 @@ export default function Settings() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Logout Device?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Are you sure you want to log out this device? The user will be signed out immediately.
+                            Are you sure you want to log out this device? The user will be signed
+                            out immediately.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleLogoutDevice(device.id)} className="bg-orange-500 hover:bg-orange-600">
+                          <AlertDialogAction
+                            onClick={() => handleLogoutDevice(device.id)}
+                            className="bg-orange-500 hover:bg-orange-600"
+                          >
                             Logout
                           </AlertDialogAction>
                         </AlertDialogFooter>

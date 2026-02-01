@@ -14,8 +14,18 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error?: AuthError | CustomAuthError | null; mfaRequired?: boolean; factorId?: string }>;
-  signUp: (email: string, password: string) => Promise<{ error: AuthError | CustomAuthError | null }>;
+  signIn: (
+    email: string,
+    password: string,
+  ) => Promise<{
+    error?: AuthError | CustomAuthError | null;
+    mfaRequired?: boolean;
+    factorId?: string;
+  }>;
+  signUp: (
+    email: string,
+    password: string,
+  ) => Promise<{ error: AuthError | CustomAuthError | null }>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
 }
@@ -41,20 +51,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
 
-        if (session?.user) {
-          setTimeout(() => {
-            checkAdminStatus(session.user.id);
-          }, 0);
-        } else {
-          setIsAdmin(false);
-        }
+      if (session?.user) {
+        setTimeout(() => {
+          checkAdminStatus(session.user.id);
+        }, 0);
+      } else {
+        setIsAdmin(false);
       }
-    );
+    });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -90,13 +100,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (email.toLowerCase() !== ALLOWED_EMAIL.toLowerCase()) {
       return {
         error: {
-          message: 'Access denied. This email is not authorized to access this system.'
-        }
+          message: 'Access denied. This email is not authorized to access this system.',
+        },
       };
     }
 
-    // Get device fingerprint
-    const deviceFingerprint = await generateDeviceFingerprint();
+    // Start device fingerprint generation early (async-defer-await)
+    // These run in parallel with the sign-in API call
+    const fingerprintPromise = generateDeviceFingerprint();
     const deviceId = getDeviceId();
     const deviceInfo = getDeviceInfo();
 
@@ -109,16 +120,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { error };
     }
 
+    // Await fingerprint now that we need it
+    const deviceFingerprint = await fingerprintPromise;
+
     // Check session limits
-    const { limitReached, activeSessions } = await hasReachedSessionLimit(data.user.id, deviceFingerprint);
+    const { limitReached, activeSessions } = await hasReachedSessionLimit(
+      data.user.id,
+      deviceFingerprint,
+    );
 
     if (limitReached) {
       await supabase.auth.signOut();
-      const deviceNames = activeSessions.map(s => s.device_name || 'Unknown Device').join(', ');
+      const deviceNames = activeSessions.map((s) => s.device_name || 'Unknown Device').join(', ');
       return {
         error: {
-          message: `You have reached the maximum limit of ${MAX_CONCURRENT_SESSIONS} active devices. Please logout from one of your other devices: ${deviceNames}`
-        }
+          message: `You have reached the maximum limit of ${MAX_CONCURRENT_SESSIONS} active devices. Please logout from one of your other devices: ${deviceNames}`,
+        },
       };
     }
 
@@ -137,27 +154,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!authorizedDevice) {
       // First time login - authorize this device
       // We removed the strict whitelist check to allow adding new devices up to the session limit
-      const { error: insertError } = await supabase
-        .from('authorized_devices')
-        .insert({
-          user_id: data.user.id,
-          device_id: deviceId,
-          device_fingerprint: deviceFingerprint,
-          device_name: `${deviceInfo.browser} on ${deviceInfo.os}`,
-          browser: deviceInfo.browser,
-          os: deviceInfo.os,
-          platform: deviceInfo.platform,
-          is_active: true,
-          session_id: data.session.access_token,
-        });
+      const { error: insertError } = await supabase.from('authorized_devices').insert({
+        user_id: data.user.id,
+        device_id: deviceId,
+        device_fingerprint: deviceFingerprint,
+        device_name: `${deviceInfo.browser} on ${deviceInfo.os}`,
+        browser: deviceInfo.browser,
+        os: deviceInfo.os,
+        platform: deviceInfo.platform,
+        is_active: true,
+        session_id: data.session.access_token,
+      });
 
       if (insertError) {
         console.error('Failed to register device:', insertError);
         await supabase.auth.signOut();
         return {
           error: {
-            message: 'Failed to register device. Please try again.'
-          }
+            message: 'Failed to register device. Please try again.',
+          },
         };
       }
     } else {
@@ -180,7 +195,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Don't navigate yet, wait for MFA verification
       return {
         mfaRequired: true,
-        factorId: mfaFactors.factors[0].id
+        factorId: mfaFactors.factors[0].id,
       };
     }
 
@@ -193,8 +208,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (email.toLowerCase() !== ALLOWED_EMAIL.toLowerCase()) {
       return {
         error: {
-          message: 'Registration is restricted. Only authorized emails can create an account.'
-        }
+          message: 'Registration is restricted. Only authorized emails can create an account.',
+        },
       };
     }
 
