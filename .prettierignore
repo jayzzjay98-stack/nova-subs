@@ -1,0 +1,28 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+dist-ssr
+
+# Firebase
+.firebase
+
+# AI/Agent configs
+.agent
+.agents
+
+# Lock files (don't format)
+*.lock
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+bun.lockb
+
+# Generated files
+*.min.js
+*.min.css
+
+# Cache
+.cache
+*.cache
