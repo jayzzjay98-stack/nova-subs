@@ -10,10 +10,19 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Upload, Trash2 } from 'lucide-react';
 
+export interface PackageFormData {
+  name: string;
+  duration_days: number;
+  description: string;
+  price: number;
+  image_url: string;
+  is_default: boolean;
+}
+
 interface PackageFormProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: PackageFormData) => void;
   onDelete?: (pkg: Package) => void;
   package?: Package;
   isEditing?: boolean;
@@ -86,8 +95,9 @@ export const PackageForm = ({ open, onClose, onSubmit, onDelete, package: pkg, i
 
       setFormData({ ...formData, image_url: publicUrl });
       toast.success('Image uploaded successfully');
-    } catch (error: any) {
-      toast.error(`Upload failed: ${error.message}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Upload failed: ${message}`);
     } finally {
       setUploading(false);
     }

@@ -8,13 +8,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { usePackages } from '@/hooks/usePackages';
 import { Customer } from '@/hooks/useCustomers';
-import { motion } from 'framer-motion';
 import { formatDuration } from '@/lib/utils';
+
+export interface CustomerFormData {
+  name: string;
+  email: string;
+  service_type: 'basic' | 'premium' | 'enterprise' | 'custom';
+  package_id: string;
+  start_date: string;
+  end_date: string;
+  auto_renew: boolean;
+  notes: string;
+}
 
 interface CustomerFormProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: CustomerFormData) => void;
   customer?: Customer;
   isEditing?: boolean;
 }
@@ -33,7 +43,7 @@ export const CustomerForm = ({ open, onClose, onSubmit, customer, isEditing }: C
     return `${year}-${month}-${day}`;
   };
 
-  const getInitialFormData = () => ({
+  const getInitialFormData = (): CustomerFormData => ({
     name: '',
     email: '',
     service_type: 'basic',
@@ -44,7 +54,7 @@ export const CustomerForm = ({ open, onClose, onSubmit, customer, isEditing }: C
     notes: '',
   });
 
-  const [formData, setFormData] = useState(getInitialFormData());
+  const [formData, setFormData] = useState<CustomerFormData>(getInitialFormData());
 
   // Reset form when dialog opens/closes
   useEffect(() => {

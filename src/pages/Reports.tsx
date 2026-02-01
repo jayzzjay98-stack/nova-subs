@@ -284,7 +284,7 @@ export default function Reports() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <Select value={dateRange} onValueChange={(v: any) => setDateRange(v)}>
+                    <Select value={dateRange} onValueChange={(v: 'all' | 'this_month' | 'last_month' | '3_months' | '6_months' | 'this_year') => setDateRange(v)}>
                         <SelectTrigger className="w-[180px]">
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             <SelectValue placeholder="Select period" />

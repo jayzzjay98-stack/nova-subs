@@ -15,7 +15,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useCustomers, Customer } from '@/hooks/useCustomers';
-import { CustomerForm } from '@/components/customers/CustomerForm';
+import { CustomerForm, CustomerFormData } from '@/components/customers/CustomerForm';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -139,11 +139,11 @@ export default function Customers() {
     currentPage * itemsPerPage
   );
 
-  const handleCreate = useCallback((data: any) => {
+  const handleCreate = useCallback((data: CustomerFormData) => {
     createCustomer.mutate(data);
   }, [createCustomer]);
 
-  const handleEdit = useCallback((data: any) => {
+  const handleEdit = useCallback((data: CustomerFormData) => {
     if (editingCustomer) {
       updateCustomer.mutate({ id: editingCustomer.id, ...data });
       setEditingCustomer(undefined);

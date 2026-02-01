@@ -1,5 +1,14 @@
 import { supabase } from '@/integrations/supabase/client';
 
+/** Helper to safely extract error message from unknown error */
+const getErrorMessage = (error: unknown): string => {
+    if (error instanceof Error) return error.message;
+    if (typeof error === 'object' && error !== null && 'message' in error) {
+        return String((error as { message: unknown }).message);
+    }
+    return 'Unknown error';
+};
+
 /**
  * Start MFA enrollment process
  * Returns QR code and secret for user to scan
@@ -30,11 +39,11 @@ export const enrollMFA = async () => {
             secret: data.totp.secret,
             factorId: data.id,
         };
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('MFA enrollment error:', error);
         return {
             success: false,
-            error: error.message,
+            error: getErrorMessage(error),
         };
     }
 };
@@ -62,11 +71,11 @@ export const verifyMFAEnrollment = async (factorId: string, code: string) => {
             success: true,
             message: '2FA has been successfully enabled!',
         };
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('MFA verification error:', error);
         return {
             success: false,
-            error: error.message || 'Invalid code. Please try again.',
+            error: getErrorMessage(error) || 'Invalid code. Please try again.',
         };
     }
 };
@@ -93,11 +102,11 @@ export const verifyMFAChallenge = async (factorId: string, code: string) => {
         return {
             success: true,
         };
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('MFA challenge error:', error);
         return {
             success: false,
-            error: error.message || 'Invalid code. Please try again.',
+            error: getErrorMessage(error) || 'Invalid code. Please try again.',
         };
     }
 };
@@ -117,11 +126,11 @@ export const unenrollMFA = async (factorId: string) => {
             success: true,
             message: '2FA has been disabled.',
         };
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('MFA unenroll error:', error);
         return {
             success: false,
-            error: error.message,
+            error: getErrorMessage(error),
         };
     }
 };
@@ -140,11 +149,11 @@ export const getMFAFactors = async () => {
             factors: data.totp || [],
             hasEnabledMFA: data.totp && data.totp.length > 0,
         };
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Get MFA factors error:', error);
         return {
             success: false,
-            error: error.message,
+            error: getErrorMessage(error),
             factors: [],
             hasEnabledMFA: false,
         };

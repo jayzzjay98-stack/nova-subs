@@ -1,73 +1,139 @@
-# Welcome to your Lovable project
+# Nova Subs
 
-## Project info
+A modern subscription management system built with React, TypeScript, and Supabase.
 
-**URL**: https://lovable.dev/projects/150b75bd-f2d9-444c-ac7a-eaf02b2d9a8d
+## Tech Stack
 
-## How can I edit this code?
+- **Frontend**: React 18 + TypeScript + Vite
+- **Styling**: Tailwind CSS + shadcn/ui
+- **Backend**: Supabase (Auth + Database + Storage)
+- **State Management**: TanStack Query (React Query)
 
-There are several ways of editing your application.
+## Prerequisites
 
-**Use Lovable**
+- Node.js 18+ (recommended: use [nvm](https://github.com/nvm-sh/nvm))
+- npm or bun
+- Supabase project (for auth and database)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/150b75bd-f2d9-444c-ac7a-eaf02b2d9a8d) and start prompting.
+## Getting Started
 
-Changes made via Lovable will be committed automatically to this repo.
+### 1. Clone the repository
 
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
+```bash
 git clone <YOUR_GIT_URL>
+cd nova-subs
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### 2. Install dependencies
 
-# Step 3: Install the necessary dependencies.
-npm i
+```bash
+npm install
+# or
+bun install
+```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### 3. Set up environment variables
+
+Copy the example env file and fill in your values:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your Supabase credentials:
+
+```env
+VITE_SUPABASE_PROJECT_ID="your-project-id"
+VITE_SUPABASE_PUBLISHABLE_KEY="your-publishable-key"
+VITE_SUPABASE_URL="https://your-project-id.supabase.co"
+```
+
+### 4. Start the development server
+
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The app will be available at `http://localhost:8080`.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Available Scripts
 
-**Use GitHub Codespaces**
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm run build:dev` | Build in development mode |
+| `npm run preview` | Preview production build |
+| `npm run lint` | Run ESLint |
+| `npm run typecheck` | Run TypeScript type checking |
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Project Structure
 
-## What technologies are used for this project?
+```
+nova-subs/
+├── src/
+│   ├── components/     # UI components
+│   │   ├── auth/       # Authentication components
+│   │   ├── customers/  # Customer management
+│   │   ├── packages/   # Package management
+│   │   ├── layout/     # Layout components
+│   │   └── ui/         # shadcn/ui components
+│   ├── contexts/       # React contexts (Auth)
+│   ├── hooks/          # Custom React hooks
+│   ├── integrations/   # External integrations (Supabase)
+│   ├── lib/            # Utility functions
+│   └── pages/          # Page components
+├── supabase/           # Supabase migrations
+└── public/             # Static assets
+```
 
-This project is built with:
+## Security
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+For security setup including RLS policies and database configuration, see [SECURITY_SETUP.md](./SECURITY_SETUP.md).
 
-## How can I deploy this project?
+## Pre-deploy Checklist
 
-Simply open [Lovable](https://lovable.dev/projects/150b75bd-f2d9-444c-ac7a-eaf02b2d9a8d) and click on Share -> Publish.
+Before deploying to production, run the following checks:
 
-## Can I connect a custom domain to my Lovable project?
+```bash
+# 1. Type check
+npm run typecheck
 
-Yes, you can!
+# 2. Lint check
+npm run lint
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+# 3. Build production bundle
+npm run build
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+All commands should pass without errors.
+
+## Deployment
+
+### Firebase Hosting
+
+```bash
+# Build the app
+npm run build
+
+# Deploy to Firebase
+firebase deploy
+```
+
+### Vercel
+
+The project includes `vercel.json` for Vercel deployment. Simply connect your repository to Vercel for automatic deployments.
+
+## Environment Variables Reference
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `VITE_SUPABASE_PROJECT_ID` | Your Supabase project ID | ✅ |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Supabase anon/public key | ✅ |
+| `VITE_SUPABASE_URL` | Supabase project URL | ✅ |
+
+> ⚠️ Never commit your `.env` file. Use `.env.example` as a template.
+
+## License
+
+Private project.
