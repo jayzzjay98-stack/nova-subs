@@ -1,0 +1,56 @@
+version: 2
+updates:
+  # npm dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      # Group React ecosystem updates
+      react:
+        patterns:
+          - "react*"
+          - "@types/react*"
+      # Group linting and formatting tools
+      lint-and-format:
+        patterns:
+          - "eslint*"
+          - "@eslint/*"
+          - "prettier*"
+          - "@typescript-eslint/*"
+      # Group build tools
+      build-tools:
+        patterns:
+          - "vite*"
+          - "@vitejs/*"
+          - "typescript"
+          - "tailwindcss*"
+          - "postcss*"
+          - "autoprefixer"
+      # Group UI libraries
+      ui-libraries:
+        patterns:
+          - "@radix-ui/*"
+          - "lucide-react"
+          - "framer-motion"
+      # Group Supabase
+      supabase:
+        patterns:
+          - "@supabase/*"
+      # Group TanStack
+      tanstack:
+        patterns:
+          - "@tanstack/*"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "chore(ci)"
